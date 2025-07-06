@@ -79,6 +79,17 @@ PyCSR_dealloc(PyCSR *self)
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
+static PyObject *
+PyCSR_get_shape(PyCSR *self, void *closure)
+{
+    return Py_BuildValue("(ii)", self->csr->nrows, self->csr->ncols);
+}
+
+static PyGetSetDef PyCSR_getsetters[] = {
+    {"shape", (getter)PyCSR_get_shape, NULL, "matrix dimensions", NULL},
+    {NULL}  /* Sentinel */
+};
+
 static PyTypeObject PyCSRType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "_sparse_c.CSR",
@@ -88,6 +99,7 @@ static PyTypeObject PyCSRType = {
     .tp_doc = "Compressed Sparse Row Matrix",
     .tp_init = (initproc)PyCSR_init,
     .tp_new = PyType_GenericNew,
+    .tp_getset = PyCSR_getsetters,
 };
 
 // _sparse_c module definition
