@@ -82,6 +82,31 @@ PyCSR_dealloc(PyCSR *self)
 }
 
 static PyObject *
+PyCSR_todense(PyCSR *self, PyObject *Py_UNUSED(ignored))
+{
+    npy_intp dims[2] = {self->csr->nrows, self->csr->ncols};
+    PyObject *result = PyArray_ZEROS(2, dims, NPY_FLOAT64, 0);
+    if (!result) return NULL;
+
+    double *data = (double *)PyArray_DATA((PyArrayObject *)result);
+
+    for (int i = 0; i < self->csr->nrows; i++) {
+        for (int idx = self->csr->rowptr[i]; idx < self->csr->rowptr[i+1]; idx++) {
+            int j = self->csr->colind[idx];
+            double val = self->csr->values[idx];
+            data[i * self->csr->ncols + j] = val;
+        }
+    }
+
+    return result;
+}
+
+static PyMethodDef PyCSR_methods[] = {
+    {"todense", (PyCFunction)PyCSR_todense, METH_NOARGS, "Convert to dense NumPy array."},
+    {NULL, NULL, 0, NULL}
+};
+
+static PyObject *
 PyCSR_get_shape(PyCSR *self, void *closure)
 {
     return Py_BuildValue("(ii)", self->csr->nrows, self->csr->ncols);
@@ -140,6 +165,7 @@ static PyTypeObject PyCSRType = {
     .tp_doc = "Compressed Sparse Row Matrix",
     .tp_init = (initproc)PyCSR_init,
     .tp_new = PyType_GenericNew,
+    .tp_methods = PyCSR_methods,
     .tp_getset = PyCSR_getsetters,
     .tp_as_mapping = &PyCSR_mappingmethods,
 };
