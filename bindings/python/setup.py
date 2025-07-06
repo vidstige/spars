@@ -14,7 +14,6 @@ setup(
             sources=[
                 "sparsely/_sparse_cmodule.c",
                 "../../src/csr.c",
-                "../../src/cholesky_factor.c",
                 "../../src/cholesky.c",
             ],
             include_dirs=["../../include", numpy.get_include()],
