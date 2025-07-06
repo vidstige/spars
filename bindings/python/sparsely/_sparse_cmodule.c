@@ -90,6 +90,45 @@ static PyGetSetDef PyCSR_getsetters[] = {
     {NULL}  /* Sentinel */
 };
 
+static PyObject *
+PyCSR_subscript(PyCSR *self, PyObject *key)
+{
+    // Expect key as tuple (i, j)
+    if (!PyTuple_Check(key) || PyTuple_Size(key) != 2) {
+        PyErr_SetString(PyExc_TypeError, "CSR indices must be a 2-tuple");
+        return NULL;
+    }
+
+    PyObject *i_obj = PyTuple_GetItem(key, 0);
+    PyObject *j_obj = PyTuple_GetItem(key, 1);
+
+    int i = (int)PyLong_AsLong(i_obj);
+    int j = (int)PyLong_AsLong(j_obj);
+
+    if (i < 0 || i >= self->csr->nrows || j < 0 || j >= self->csr->ncols) {
+        PyErr_SetString(PyExc_IndexError, "index out of bounds");
+        return NULL;
+    }
+
+    // Look in row i
+    int start = self->csr->rowptr[i];
+    int end = self->csr->rowptr[i + 1];
+
+    for (int idx = start; idx < end; ++idx) {
+        if (self->csr->colind[idx] == j) {
+            return PyFloat_FromDouble(self->csr->values[idx]);
+        }
+    }
+
+    return PyFloat_FromDouble(0.0);
+}
+
+static PyMappingMethods PyCSR_mappingmethods = {
+    .mp_length = NULL,
+    .mp_subscript = (binaryfunc)PyCSR_subscript,
+    .mp_ass_subscript = NULL
+};
+
 static PyTypeObject PyCSRType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "_sparse_c.CSR",
@@ -100,6 +139,7 @@ static PyTypeObject PyCSRType = {
     .tp_init = (initproc)PyCSR_init,
     .tp_new = PyType_GenericNew,
     .tp_getset = PyCSR_getsetters,
+    .tp_as_mapping = &PyCSR_mappingmethods,
 };
 
 // _sparse_c module definition
