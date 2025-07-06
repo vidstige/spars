@@ -1,6 +1,9 @@
 from typing import Tuple
+
 import numpy as np
+
 from . import _sparse_c
+
 
 class LIL:
     def __init__(self, shape: Tuple[int, int]):
@@ -34,3 +37,28 @@ class LIL:
     def __repr__(self) -> str:
         nrows, ncols = self.shape
         return f"LIL(nrows={nrows}, ncols={ncols}, rows={self.rows})"
+
+    def tocsr(self):
+        rowptr = [0]
+        colind = []
+        values = []
+
+        for row in self.rows:
+            row = sorted(row, key=lambda x: x[0])  # optional: ensure sorted
+            for col, val in row:
+                colind.append(col)
+                values.append(val)
+            rowptr.append(len(colind))
+
+        rowptr = np.array(rowptr, dtype=np.int32)
+        colind = np.array(colind, dtype=np.int32)
+        values = np.array(values, dtype=np.float64)
+
+        nrows, ncols = self.shape
+        return _sparse_c.CSR(
+            nrows=nrows,
+            ncols=ncols,
+            rowptr=rowptr,
+            colind=colind,
+            values=values
+        )
