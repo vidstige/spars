@@ -142,12 +142,69 @@ static PyTypeObject PyCSRType = {
     .tp_as_mapping = &PyCSR_mappingmethods,
 };
 
+// cholesky function
+typedef struct {
+    PyObject_HEAD
+    /* Later: add your actual cholesky_factor_t* here */
+} PyCholeskyFactor;
+
+static int
+PyCholeskyFactor_init(PyCholeskyFactor *self, PyObject *args, PyObject *kwds)
+{
+    PyErr_SetString(PyExc_TypeError, "CholeskyFactor cannot be created directly. Use cholesky() instead.");
+    return -1;
+}
+
+static void
+PyCholeskyFactor_dealloc(PyCholeskyFactor *self)
+{
+    // Nothing yet to free
+    Py_TYPE(self)->tp_free((PyObject *)self);
+}
+
+static PyTypeObject PyCholeskyFactorType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "sparsely._sparse_c.CholeskyFactor",
+    .tp_basicsize = sizeof(PyCholeskyFactor),
+    .tp_dealloc = (destructor)PyCholeskyFactor_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_doc = "Cholesky Factor object",
+    .tp_init = (initproc)PyCholeskyFactor_init,
+    .tp_new = PyType_GenericNew,
+};
+
+static PyObject *
+cholesky_func(PyObject *self, PyObject *args)
+{
+    PyObject *csr_arg;
+    if (!PyArg_ParseTuple(args, "O", &csr_arg)) {
+        return NULL;
+    }
+
+    if (!PyObject_TypeCheck(csr_arg, &PyCSRType)) {
+        PyErr_SetString(PyExc_TypeError, "expected CSR object");
+        return NULL;
+    }
+
+    PyCholeskyFactor *result = PyObject_New(PyCholeskyFactor, &PyCholeskyFactorType);
+    if (!result) return NULL;
+
+    // In the future, do actual factorization here
+
+    return (PyObject *)result;
+}
+
 // _sparse_c module definition
 static PyModuleDef _sparse_c_module = {
     PyModuleDef_HEAD_INIT,
     .m_name = "_sparse_c",
     .m_doc = "Light weight sparse matrix library",
     .m_size = -1,
+};
+
+static PyMethodDef module_methods[] = {
+    {"cholesky", cholesky_func, METH_VARARGS, "Compute Cholesky factorization of a CSR matrix."},
+    {NULL, NULL, 0, NULL}
 };
 
 PyMODINIT_FUNC
@@ -157,7 +214,10 @@ PyInit__sparse_c(void)
     if (PyType_Ready(&PyCSRType) < 0)
         return NULL;
 
-    import_array();
+    if (PyType_Ready(&PyCholeskyFactorType) < 0)
+        return NULL;
+
+    import_array(); // Initialize NumPy C API
 
     m = PyModule_Create(&_sparse_c_module);
     if (!m)
@@ -165,6 +225,18 @@ PyInit__sparse_c(void)
 
     Py_INCREF(&PyCSRType);
     PyModule_AddObject(m, "CSR", (PyObject *)&PyCSRType);
+
+    Py_INCREF(&PyCholeskyFactorType);
+    PyModule_AddObject(m, "CholeskyFactor", (PyObject *)&PyCholeskyFactorType);
+
+#if PY_VERSION_HEX >= 0x030C0000
+    PyModule_AddFunctions(m, module_methods);
+#else
+    for (PyMethodDef *def = module_methods; def && def->ml_name; ++def) {
+        PyModule_AddObject(m, def->ml_name,
+                           PyCFunction_New(def, NULL));
+    }
+#endif
 
     return m;
 }
