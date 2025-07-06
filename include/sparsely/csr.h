@@ -17,3 +17,4 @@ csr_t *csr_create(
 
 void csr_destroy(csr_t *mat);
 
+void csr_sort_indices(csr_t *A);

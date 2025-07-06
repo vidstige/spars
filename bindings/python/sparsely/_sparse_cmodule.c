@@ -3,6 +3,8 @@
 
 #include "sparsely/csr.h"
 #include "sparsely/cholesky.h"
+#include "sparsely/cholesky_solve.h"
+#include "sparsely/dense.h"
 
 // PyCSR
 typedef struct {
@@ -82,6 +84,13 @@ PyCSR_dealloc(PyCSR *self)
 }
 
 static PyObject *
+PyCSR_sort_indices(PyCSR *self, PyObject *Py_UNUSED(ignored))
+{
+    csr_sort_indices(self->csr);
+    Py_RETURN_NONE;
+}
+
+static PyObject *
 PyCSR_todense(PyCSR *self, PyObject *Py_UNUSED(ignored))
 {
     npy_intp dims[2] = {self->csr->nrows, self->csr->ncols};
@@ -102,6 +111,7 @@ PyCSR_todense(PyCSR *self, PyObject *Py_UNUSED(ignored))
 }
 
 static PyMethodDef PyCSR_methods[] = {
+    {"sort_indices", (PyCFunction)PyCSR_sort_indices, METH_NOARGS, "Sort colind within rows and move diagonal to last."},
     {"todense", (PyCFunction)PyCSR_todense, METH_NOARGS, "Convert to dense NumPy array."},
     {NULL, NULL, 0, NULL}
 };
@@ -200,6 +210,55 @@ cholesky_func(PyObject *self, PyObject *args)
     return (PyObject *)result;
 }
 
+// cholesky solve
+static PyObject *
+sparse_solve_cholesky(PyObject *self, PyObject *args)
+{
+    PyObject *L_obj;
+    PyObject *b_obj;
+
+    if (!PyArg_ParseTuple(args, "OO", &L_obj, &b_obj))
+        return NULL;
+
+    if (!PyObject_TypeCheck(L_obj, &PyCSRType)) {
+        PyErr_SetString(PyExc_TypeError, "First argument must be CSR.");
+        return NULL;
+    }
+
+    PyArrayObject *b_array = (PyArrayObject *)PyArray_FROM_OTF(b_obj, NPY_FLOAT64, NPY_ARRAY_IN_ARRAY);
+    if (!b_array) return NULL;
+
+    if (PyArray_NDIM(b_array) != 1) {
+        PyErr_SetString(PyExc_ValueError, "RHS b must be 1D.");
+        Py_DECREF(b_array);
+        return NULL;
+    }
+
+    int n = (int)PyArray_DIM(b_array, 0);
+    if (n != ((PyCSR *)L_obj)->csr->nrows) {
+        PyErr_SetString(PyExc_ValueError, "Dimension mismatch between matrix and RHS.");
+        Py_DECREF(b_array);
+        return NULL;
+    }
+
+    // Allocate output
+    npy_intp dims[1] = {n};
+    PyObject *x_array = PyArray_SimpleNew(1, dims, NPY_FLOAT64);
+    if (!x_array) {
+        Py_DECREF(b_array);
+        return NULL;
+    }
+
+    // Build dense_t wrappers
+    dense_t b_dense = { n, (double *)PyArray_DATA(b_array) };
+    dense_t x_dense = { n, (double *)PyArray_DATA((PyArrayObject *)x_array) };
+
+    // Call pure C solver
+    csr_solve_cholesky(((PyCSR *)L_obj)->csr, &b_dense, &x_dense);
+
+    Py_DECREF(b_array);
+    return x_array;
+}
 
 // _sparse_c module definition
 static PyModuleDef _sparse_c_module = {
@@ -211,6 +270,7 @@ static PyModuleDef _sparse_c_module = {
 
 static PyMethodDef module_methods[] = {
     {"cholesky", cholesky_func, METH_VARARGS, "Compute Cholesky factorization of a CSR matrix."},
+    {"solve_cholesky", sparse_solve_cholesky, METH_VARARGS, "Solve LLᵗ x = b for x."},    
     {NULL, NULL, 0, NULL}
 };
 
