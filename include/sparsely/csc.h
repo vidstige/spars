@@ -10,8 +10,8 @@ typedef struct {
 } csc_t;
 
 csc_t *csc_create(int nrows, int ncols, int nnz,
-                   const int *colptr,
-                   const int *rowind,
-                   const double *values);
+                   int *colptr,
+                   int *rowind,
+                   double *values);
 
 void csc_destroy(csc_t *csc);
