@@ -1,7 +1,5 @@
 import numpy as np
 
-from sparsely import lil_array
-
 from .matrices import easy2x2
 
 

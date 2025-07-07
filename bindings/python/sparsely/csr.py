@@ -21,7 +21,7 @@ class CSR:
     def todense(self) -> np.ndarray:
         return self._c_obj.todense()
 
-    def dot(self, rhs) -> Union['CSR', np.ndarray]:
+    def dot(self, rhs):
         if isinstance(rhs, CSR):
             return CSR.from_c_obj(_sparse_c.csr_mul_csr(self._c_obj, rhs._c_obj))
         if isinstance(rhs, np.ndarray):
