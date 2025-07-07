@@ -1,15 +1,12 @@
 import numpy as np
+
 from sparsely import lil_array, cholesky, solve_cholesky
+
+from .matrices import easy2x2
 
 
 def test_factorization():
-    A_lil = lil_array((2, 2))
-    A_lil[0, 0] = 4
-    A_lil[0, 1] = 2
-    A_lil[1, 0] = 2
-    A_lil[1, 1] = 3
-    
-    A = A_lil.tocsr()
+    A = easy2x2()
     L = cholesky(A)
 
     expected = np.array([
@@ -20,14 +17,7 @@ def test_factorization():
 
 
 def test_solve_2x2():
-    # Build A in LIL form
-    A_lil = lil_array((2, 2))
-    A_lil[0, 0] = 4
-    A_lil[0, 1] = 2
-    A_lil[1, 0] = 2
-    A_lil[1, 1] = 3
-
-    A = A_lil.tocsr()  # Convert to CSR
+    A = easy2x2()
     b = np.array([8.0, 8.0])
     L = cholesky(A)  # find factorization
     L.sort_indices()  # sort indices to ensure diagonal is last
