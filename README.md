@@ -5,6 +5,14 @@ Lightweight sparse matrix c-library with python wrapper.
 
 Focused on correctness, but should be fairly fast for many problems.
 
+Already contains the following
+* CSR & CSC sparse types
+* LIL sparse type for each array creation
+* Working sparse Cholesky factorization
+* Solve function (Only for Hermitian positive-definite matrices)
+
+Should be fairly fast as well, but hasn't been fully profiled and optimized.
+
 ## Developing
 Building C only: `make`
 
