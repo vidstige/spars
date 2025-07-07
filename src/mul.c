@@ -2,7 +2,7 @@
 #include "sparsely/dense.h"
 #include "sparsely/mul.h"
 
-dense_t csr_dot_dense(const csr_t *A, const dense_t *x) {
+dense_t csr_mul_dense(const csr_t *A, const dense_t *x) {
     assert(A->ncols == x->n);
 
     dense_t y = dense_empty(A->nrows);

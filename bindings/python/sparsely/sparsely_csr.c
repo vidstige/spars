@@ -126,7 +126,7 @@ PyCSR_dot_dense(PyCSR *self, PyObject *args)
     x.values = (double *)PyArray_DATA(x_array);
 
     // Compute A * x
-    dense_t y = csr_dot_dense(self->csr, &x);
+    dense_t y = csr_mul_dense(self->csr, &x);
 
     npy_intp dims[1] = { y.n };
     PyObject *result = PyArray_SimpleNew(1, dims, NPY_FLOAT64);
