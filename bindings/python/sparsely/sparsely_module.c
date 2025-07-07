@@ -3,6 +3,7 @@
 #include <numpy/arrayobject.h>
 #include "sparsely_csr.h"
 #include "sparsely_csc.h"
+#include "sparsely_mul.h"
 #include "sparsely_cholesky.h"
 
 static PyModuleDef sparsely_module = {
@@ -27,6 +28,9 @@ PyInit__sparse_c(void)
         return NULL;
     
     if (register_csc_type(m) < 0)
+        return NULL;
+
+    if (register_mul_functions(m) < 0)
         return NULL;
 
     if (register_cholesky_functions(m) < 0)

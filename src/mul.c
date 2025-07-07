@@ -19,3 +19,9 @@ dense_t csr_mul_dense(const csr_t *A, const dense_t *x) {
 
     return y;
 }
+
+csr_t *csr_mul_csr(const csr_t *A, const csr_t *B) {
+    //fprintf(stderr, "csr_mul_csr: Not implemented yet!\n");
+    //abort();
+    return 0;
+}
