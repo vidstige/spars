@@ -1,5 +1,5 @@
 import numpy as np
-from ._sparse_c import CSC as _RawCSC
+from ._sparse_c import CSC as _RawCSC, csc_mul_csr, csc_mul_dense
 
 
 class CSC:
@@ -23,6 +23,19 @@ class CSC:
 
     def todense(self) -> np.ndarray:
         return self._c_obj.todense()
+
+    def dot(self, rhs):
+        from .csr import CSR
+        import numpy as np
+
+        if isinstance(rhs, CSR):
+            return CSR.from_c_obj(csc_mul_csr(self._c_obj, rhs._c_obj))
+        if isinstance(rhs, np.ndarray):
+            return csc_mul_dense(self._c_obj, rhs)
+        raise TypeError(f"Unsupported rhs type for dot: {type(rhs)}")
+
+    def __matmul__(self, rhs):
+        return self.dot(rhs)
 
     def __getitem__(self, key):
         return self._c_obj[key]
