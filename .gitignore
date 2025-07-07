@@ -1,1 +1,3 @@
 /venv/
+/obj/
+/lib/*.a
