@@ -23,7 +23,7 @@ class CSR:
 
     def dot(self, rhs) -> Union['CSR', np.ndarray]:
         if isinstance(rhs, CSR):
-            return CSR(_sparse_c.csr_mul_csr(self._c_obj, rhs._c_obj))
+            return CSR.from_c_obj(_sparse_c.csr_mul_csr(self._c_obj, rhs._c_obj))
         if isinstance(rhs, np.ndarray):
             return _sparse_c.csr_mul_dense(self._c_obj, rhs)
         raise TypeError(f"Unsupported rhs type for dot: {type(rhs)}")
