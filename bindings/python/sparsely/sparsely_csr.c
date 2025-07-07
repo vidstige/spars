@@ -101,49 +101,6 @@ PyCSR_dealloc(PyCSR *self)
 // ---------- Methods ----------
 
 static PyObject *
-PyCSR_dot_dense(PyCSR *self, PyObject *args)
-{
-    PyObject *x_obj;
-
-    if (!PyArg_ParseTuple(args, "O", &x_obj))
-        return NULL;
-
-    PyArrayObject *x_array = (PyArrayObject *)PyArray_FROM_OTF(x_obj, NPY_FLOAT64, NPY_ARRAY_IN_ARRAY);
-    if (!x_array) {
-        PyErr_SetString(PyExc_TypeError, "Expected a numpy array of floats");
-        return NULL;
-    }
-
-    int n = (int)PyArray_DIM(x_array, 0);
-    if (n != self->csr->ncols) {
-        Py_DECREF(x_array);
-        PyErr_Format(PyExc_ValueError, "Dimension mismatch: matrix has %d cols but vector is length %d", self->csr->ncols, n);
-        return NULL;
-    }
-
-    dense_t x;
-    x.n = n;
-    x.values = (double *)PyArray_DATA(x_array);
-
-    // Compute A * x
-    dense_t y = csr_mul_dense(self->csr, &x);
-
-    npy_intp dims[1] = { y.n };
-    PyObject *result = PyArray_SimpleNew(1, dims, NPY_FLOAT64);
-    if (!result) {
-        dense_destroy(&y);
-        Py_DECREF(x_array);
-        return NULL;
-    }
-
-    memcpy(PyArray_DATA((PyArrayObject *)result), y.values, y.n * sizeof(double));
-    dense_destroy(&y);
-    Py_DECREF(x_array);
-
-    return result;
-}
-
-static PyObject *
 PyCSR_sort_indices(PyCSR *self, PyObject *Py_UNUSED(ignored))
 {
     csr_sort_indices(self->csr);
@@ -180,7 +137,6 @@ PyCSR_get_shape(PyCSR *self, void *closure)
 }
 
 static PyMethodDef PyCSR_methods[] = {
-    {"dot", (PyCFunction)PyCSR_dot_dense, METH_VARARGS, "Compute the dot product of this CSR matrix with a dense vector."},
     {"sort_indices", (PyCFunction)PyCSR_sort_indices, METH_NOARGS, "Sort colind within rows and move diagonal to last."},
     {"todense", (PyCFunction)PyCSR_todense, METH_NOARGS, "Convert to dense NumPy array."},
     {NULL, NULL, 0, NULL}
