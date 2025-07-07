@@ -14,8 +14,10 @@ setup(
             sources=[
                 "sparsely/sparsely_module.c",
                 "sparsely/sparsely_csr.c",
+                "sparsely/sparsely_csc.c",
                 "sparsely/sparsely_cholesky.c",
                 "../../src/csr.c",
+                "../../src/csc.c",
                 "../../src/cholesky.c",
                 "../../src/cholesky_solve.c",
                 "../../src/dense.c",
