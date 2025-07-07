@@ -1,6 +1,6 @@
 from typing import Union
 import numpy as np
-from .lil import LIL
+
 from ._sparse_c import CSR as _RawCSR, csr_mul_dense, csr_mul_csr
 
 
@@ -10,6 +10,7 @@ class CSR:
 
     @classmethod
     def from_dense(cls, array_like: Union[np.ndarray, list[list[float]]]) -> 'CSR':
+        from .lil import LIL
         lil = LIL.from_dense(array_like)
         return lil.tocsr()
 
@@ -22,6 +23,11 @@ class CSR:
     @property
     def shape(self):
         return self._c_obj.shape
+
+    @property
+    def T(self):
+        from .csc import CSC
+        return CSC.from_c_obj(self._c_obj.T)
 
     def todense(self) -> np.ndarray:
         return self._c_obj.todense()

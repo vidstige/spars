@@ -1,15 +1,15 @@
 #include <Python.h>
-#include <numpy/arrayobject.h>
-#include "sparsely/csc.h"
-#include "sparsely_csc.h"
-
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <numpy/arrayobject.h>
+#include "sparsely_csc.h"
+#include "sparsely_csr.h"
 
-// ----- PyCSC struct -----
-typedef struct {
-    PyObject_HEAD
-    csc_t *csc;
-} PyCSC;
+#include "sparsely/csr.h"
+#include "sparsely/csc.h"
+#include "sparsely/mul.h"
+
+// Extern type from CSR
+extern PyTypeObject PyCSRType;
 
 // helper functions
 static int *copy_int_array(PyArrayObject *arr, int count) {
@@ -29,8 +29,6 @@ static double *copy_double_array(PyArrayObject *arr, int count) {
 
 // ----- INIT -----
 static int PyCSC_init(PyCSC *self, PyObject *args, PyObject *kwds) {
-    fprintf(stderr, "[PyCSC_init] ENTER\n");
-
     int nrows, ncols;
     PyObject *colptr_obj = NULL;
     PyObject *rowind_obj = NULL;
@@ -103,7 +101,6 @@ static int PyCSC_init(PyCSC *self, PyObject *args, PyObject *kwds) {
     Py_DECREF(rowind_array);
     Py_DECREF(values_array);
 
-    fprintf(stderr, "[PyCSC_init] SUCCESS\n");
     return 0;
 
 fail:
@@ -126,8 +123,29 @@ static PyObject *PyCSC_get_shape(PyCSC *self, void *closure) {
     return Py_BuildValue("(ii)", self->csc->nrows, self->csc->ncols);
 }
 
+// transpose
+static PyObject *
+PyCSC_T(PyCSC *self, void *closure)
+{
+    csr_t *result = csc_transpose_to_csr(self->csc);
+    if (!result) {
+        PyErr_SetString(PyExc_RuntimeError, "Transpose failed.");
+        return NULL;
+    }
+
+    PyCSR *py_result = PyObject_New(PyCSR, &PyCSRType);
+    if (!py_result) {
+        csr_destroy(result);
+        return NULL;
+    }
+
+    py_result->csr = result;
+    return (PyObject *)py_result;
+}
+
 static PyGetSetDef PyCSC_getsetters[] = {
     {"shape", (getter)PyCSC_get_shape, NULL, "matrix dimensions", NULL},
+    {"T", (getter)PyCSC_T, NULL, "Transpose (returns CSR)", NULL},
     {NULL}
 };
 

@@ -6,7 +6,10 @@
 #include "sparsely/csr.h"
 #include "sparsely/dense.h"
 #include "sparsely/mul.h"
+#include "sparsely_csc.h"
 
+// Extern type from CSC
+extern PyTypeObject PyCSCType;
 
 
 // ---------- Init and dealloc ----------
@@ -168,6 +171,27 @@ PyCSR_get_shape(PyCSR *self, void *closure)
     return Py_BuildValue("(ii)", self->csr->nrows, self->csr->ncols);
 }
 
+// transpose
+static PyObject *
+PyCSR_T(PyCSR *self, void *closure)
+{
+    csc_t *result = csr_transpose_to_csc(self->csr);
+    if (!result) {
+        PyErr_SetString(PyExc_RuntimeError, "Transpose failed.");
+        return NULL;
+    }
+
+    PyCSC *py_result = PyObject_New(PyCSC, &PyCSCType);
+    if (!py_result) {
+        csc_destroy(result);
+        return NULL;
+    }
+
+    py_result->csc = result;
+    return (PyObject *)py_result;
+}
+
+
 static PyMethodDef PyCSR_methods[] = {
     {"sort_indices", (PyCFunction)PyCSR_sort_indices, METH_NOARGS, "Sort colind within rows and move diagonal to last."},
     {"todense", (PyCFunction)PyCSR_todense, METH_NOARGS, "Convert to dense NumPy array."},
@@ -176,6 +200,7 @@ static PyMethodDef PyCSR_methods[] = {
 
 static PyGetSetDef PyCSR_getsetters[] = {
     {"shape", (getter)PyCSR_get_shape, NULL, "matrix dimensions", NULL},
+    {"T", (getter)PyCSR_T, NULL, "Transpose (returns CSC)", NULL},
     {NULL}  /* Sentinel */
 };
 
