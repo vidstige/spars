@@ -1,3 +1,5 @@
+![logo64x64.png](logo64x64.png)
+
 # Sparsely
 Lightweight sparse matrix c-library with python wrapper.
 
