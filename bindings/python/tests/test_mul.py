@@ -1,5 +1,5 @@
 import numpy as np
-from sparsely import lil_array
+from sparsely import lil_array, csr_array
 
 
 def test_csr_mul_csr_sparse():
@@ -25,3 +25,21 @@ def test_csr_mul_csr_sparse():
     C_expected = A_dense @ A_dense
 
     np.testing.assert_allclose(C.todense(), C_expected, rtol=1e-6, atol=1e-12)
+
+
+def test_csc_mul_dense():
+    A_dense = np.array([
+        [1, 0, 2],
+        [0, 3, 0],
+        [4, 0, 5]
+    ])
+
+    A = csr_array.from_dense(A_dense)
+    AT = A.T
+    x = np.array([1.0, 2.0, 3.0])
+
+    result = AT @ x
+
+    expected = A_dense.T @ x
+
+    np.testing.assert_allclose(result, expected)
