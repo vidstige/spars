@@ -206,3 +206,72 @@ csr_t *csc_transpose_to_csr(const csc_t *A) {
     free(row_counts);
     return csr_create(m, n, nnz, rowptr, colind, values);
 }
+
+csr_t *csc_mul_csr(const csc_t *A, const csr_t *B) {
+    assert(A->ncols == B->nrows);
+
+    int m = A->nrows;
+    int n = B->ncols;
+
+    int *rowptr = (int *)calloc(m + 1, sizeof(int));
+    int capacity = 16;
+    int *colind = (int *)malloc(capacity * sizeof(int));
+    double *values = (double *)malloc(capacity * sizeof(double));
+    if (!rowptr || !colind || !values) {
+        free(rowptr); free(colind); free(values);
+        return NULL;
+    }
+
+    int nnz = 0;
+    for (int i = 0; i < m; i++) {
+        double *accum = (double *)calloc(n, sizeof(double));
+        char *mask = (char *)calloc(n, sizeof(char));
+
+        // For row i in A (CSC)
+        for (int j = 0; j < A->ncols; j++) {
+            // A(i, j) = ?
+            for (int idx = A->colptr[j]; idx < A->colptr[j + 1]; idx++) {
+                if (A->rowind[idx] == i) {
+                    double a_ij = A->values[idx];
+
+                    // Multiply this column of A with row of B
+                    for (int k = B->rowptr[j]; k < B->rowptr[j + 1]; k++) {
+                        int col = B->colind[k];
+                        double val = a_ij * B->values[k];
+
+                        accum[col] += val;
+                        mask[col] = 1;
+                    }
+                }
+            }
+        }
+
+        rowptr[i + 1] = rowptr[i];
+        for (int col = 0; col < n; col++) {
+            if (mask[col]) {
+                if (nnz >= capacity) {
+                    capacity *= 2;
+                    colind = (int *)realloc(colind, capacity * sizeof(int));
+                    values = (double *)realloc(values, capacity * sizeof(double));
+                    if (!colind || !values) {
+                        free(rowptr); free(colind); free(values);
+                        free(accum); free(mask);
+                        return NULL;
+                    }
+                }
+                colind[nnz] = col;
+                values[nnz] = accum[col];
+                nnz++;
+                rowptr[i + 1]++;
+            }
+        }
+
+        free(accum);
+        free(mask);
+    }
+
+    // Trim arrays
+    colind = (int *)realloc(colind, nnz * sizeof(int));
+    values = (double *)realloc(values, nnz * sizeof(double));
+    return csr_create(m, n, nnz, rowptr, colind, values);
+}
