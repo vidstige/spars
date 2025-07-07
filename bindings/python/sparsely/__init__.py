@@ -1,7 +1,7 @@
-from ._sparse_c import CSR as CSR
-from ._sparse_c import CSC as CSC
-from ._sparse_c import cholesky as cholesky, solve_cholesky as solve_cholesky
 from .lil import LIL as LIL
+from .csr import CSR as CSR
+from ._sparse_c import CSC as CSC
+from .cholesky import cholesky, solve_cholesky
 
 csr_array = CSR
 csc_array = CSC

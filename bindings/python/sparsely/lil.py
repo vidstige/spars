@@ -2,6 +2,7 @@ from typing import Tuple
 
 import numpy as np
 
+from .csr import CSR
 from . import _sparse_c
 
 
@@ -58,10 +59,10 @@ class LIL:
         assert colind.shape[0] == values.shape[0]
 
         nrows, ncols = self.shape
-        return _sparse_c.CSR(
+        return CSR.from_c_obj(_sparse_c.CSR(
             nrows=nrows,
             ncols=ncols,
             rowptr=rowptr,
             colind=colind,
             values=values
-        )
+        ))
