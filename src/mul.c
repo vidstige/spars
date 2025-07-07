@@ -275,3 +275,19 @@ csr_t *csc_mul_csr(const csc_t *A, const csr_t *B) {
     values = (double *)realloc(values, nnz * sizeof(double));
     return csr_create(m, n, nnz, rowptr, colind, values);
 }
+
+dense_t csc_mul_dense(const csc_t *A, const dense_t *x) {
+    assert(A->ncols == x->n);
+
+    dense_t y = dense_zeros(A->nrows);
+
+    for (int j = 0; j < A->ncols; j++) {
+        double xj = x->values[j];
+        for (int idx = A->colptr[j]; idx < A->colptr[j + 1]; idx++) {
+            int i = A->rowind[idx];
+            y.values[i] += A->values[idx] * xj;
+        }
+    }
+
+    return y;
+}
