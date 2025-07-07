@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 
@@ -11,6 +11,23 @@ class LIL:
         self.shape = shape
         nrows, _ = shape
         self.rows = [[] for _ in range(nrows)]
+
+    @classmethod
+    def from_dense(cls, array_like: Union[np.ndarray, list[list[float]]]) -> 'LIL':
+        dense = np.asarray(array_like, dtype=np.float64)
+        if dense.ndim != 2:
+            raise ValueError("from_dense expects a 2D array.")
+
+        nrows, ncols = dense.shape
+        lil = cls((nrows, ncols))
+
+        for i in range(nrows):
+            for j in range(ncols):
+                val = dense[i, j]
+                if val != 0.0:
+                    lil[i, j] = val
+
+        return lil
 
     def __setitem__(self, key, value):
         """Allow A[i, j] = val"""

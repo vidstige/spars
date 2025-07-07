@@ -1,10 +1,13 @@
-from typing import overload
+from typing import Union, overload
 import numpy as np
 
 class CSR:
     shape: tuple[int, int]
 
     def __init__(self, *, nrows: int, ncols: int, rowptr: np.ndarray, colind: np.ndarray, values: np.ndarray) -> None: ...
+
+    @classmethod
+    def from_dense(cls, array_like: Union[np.ndarray, list[list[float]]]) -> 'CSR': ...
 
     def todense(self) -> np.ndarray: ...
 
@@ -30,8 +33,12 @@ class CSC:
     def sort_indices(self) -> None: ...
     def __getitem__(self, key: tuple[int, int]) -> float: ...
 
+
 class LIL:
     shape: tuple[int, int]
+
+    @classmethod
+    def from_dense(cls, array_like: Union[np.ndarray, list[list[float]]]) -> 'LIL': ...
 
     def __init__(self, shape: tuple[int, int]) -> None: ...
     def __getitem__(self, key: tuple[int, int]) -> float: ...

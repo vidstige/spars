@@ -1,12 +1,17 @@
 from typing import Union
 import numpy as np
-from . import _sparse_c
+from .lil import LIL
 from ._sparse_c import CSR as _RawCSR, csr_mul_dense, csr_mul_csr
 
 
 class CSR:
     def __init__(self, *args, **kwargs):
         self._c_obj = _RawCSR(*args, **kwargs)
+
+    @classmethod
+    def from_dense(cls, array_like: Union[np.ndarray, list[list[float]]]) -> 'CSR':
+        lil = LIL.from_dense(array_like)
+        return lil.tocsr()
 
     @classmethod
     def from_c_obj(cls, c_obj):
@@ -23,9 +28,9 @@ class CSR:
 
     def dot(self, rhs):
         if isinstance(rhs, CSR):
-            return CSR.from_c_obj(_sparse_c.csr_mul_csr(self._c_obj, rhs._c_obj))
+            return CSR.from_c_obj(csr_mul_csr(self._c_obj, rhs._c_obj))
         if isinstance(rhs, np.ndarray):
-            return _sparse_c.csr_mul_dense(self._c_obj, rhs)
+            return csr_mul_dense(self._c_obj, rhs)
         raise TypeError(f"Unsupported rhs type for dot: {type(rhs)}")
 
     def __matmul__(self, rhs):
