@@ -117,9 +117,47 @@ static PyObject *PyCSC_todense(PyCSC *self, PyObject *Py_UNUSED(ignored)) {
     return result;
 }
 
+// index operator
+static PyObject *PyCSC_subscript(PyCSC *self, PyObject *key) {
+    // Expect key as tuple (i, j)
+    if (!PyTuple_Check(key) || PyTuple_Size(key) != 2) {
+        PyErr_SetString(PyExc_TypeError, "CSC indices must be a 2-tuple");
+        return NULL;
+    }
+
+    PyObject *i_obj = PyTuple_GetItem(key, 0);
+    PyObject *j_obj = PyTuple_GetItem(key, 1);
+
+    int i = (int)PyLong_AsLong(i_obj);
+    int j = (int)PyLong_AsLong(j_obj);
+
+    if (i < 0 || i >= self->csc->nrows || j < 0 || j >= self->csc->ncols) {
+        PyErr_SetString(PyExc_IndexError, "index out of bounds");
+        return NULL;
+    }
+
+    // Look in column j
+    int start = self->csc->colptr[j];
+    int end = self->csc->colptr[j + 1];
+
+    for (int idx = start; idx < end; ++idx) {
+        if (self->csc->rowind[idx] == i) {
+            return PyFloat_FromDouble(self->csc->values[idx]);
+        }
+    }
+
+    return PyFloat_FromDouble(0.0);
+}
+
 static PyMethodDef PyCSC_methods[] = {
     {"todense", (PyCFunction)PyCSC_todense, METH_NOARGS, "Convert to dense NumPy array."},
     {NULL, NULL, 0, NULL}
+};
+
+static PyMappingMethods PyCSC_mappingmethods = {
+    .mp_length = NULL,
+    .mp_subscript = (binaryfunc)PyCSC_subscript,
+    .mp_ass_subscript = NULL
 };
 
 // ----- PyTypeObject -----
@@ -134,6 +172,7 @@ PyTypeObject PyCSCType = {
     .tp_new = PyType_GenericNew,
     .tp_methods = PyCSC_methods,
     .tp_getset = PyCSC_getsetters,
+    .tp_as_mapping = &PyCSC_mappingmethods,
 };
 
 // ----- Registration -----
