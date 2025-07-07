@@ -12,7 +12,9 @@ setup(
         Extension(
             "sparsely._sparse_c",
             sources=[
-                "sparsely/_sparse_cmodule.c",
+                "sparsely/sparsely_module.c",
+                "sparsely/sparsely_csr.c",
+                "sparsely/sparsely_cholesky.c",
                 "../../src/csr.c",
                 "../../src/cholesky.c",
                 "../../src/cholesky_solve.c",
