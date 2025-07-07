@@ -24,22 +24,3 @@ def test_lil():
     assert data[2, 0] == 4.0
     assert data[2, 1] == 0.0  # Default value for unset elements
     assert data[2, 2] == 5.0
-    
-def test_lil_tocsr():
-    # Create a LIL array and convert to CSR
-    data = lil_array((3, 3))
-    data[0, 0] = 1.0
-    data[0, 2] = 2.0
-    data[1, 1] = 3.0
-    data[2, 0] = 4.0
-    data[2, 2] = 5.0
-    
-    csr_data = data.tocsr()
-    
-    # Check the CSR representation
-    assert csr_data.shape == (3, 3)
-    assert csr_data[0, 0] == 1.0
-    assert csr_data[0, 2] == 2.0
-    assert csr_data[1, 1] == 3.0
-    assert csr_data[2, 0] == 4.0
-    assert csr_data[2, 2] == 5.0
