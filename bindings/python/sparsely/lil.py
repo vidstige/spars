@@ -50,9 +50,12 @@ class LIL:
                 values.append(val)
             rowptr.append(len(colind))
 
-        rowptr = np.array(rowptr, dtype=np.int32)
-        colind = np.array(colind, dtype=np.int32)
-        values = np.array(values, dtype=np.float64)
+        rowptr = np.asarray(rowptr, dtype=np.int32)
+        colind = np.asarray(colind, dtype=np.int32)
+        values = np.asarray(values, dtype=np.float64)
+
+        assert rowptr.shape[0] == self.shape[0] + 1
+        assert colind.shape[0] == values.shape[0]
 
         nrows, ncols = self.shape
         return _sparse_c.CSR(
