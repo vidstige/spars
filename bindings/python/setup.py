@@ -17,6 +17,7 @@ setup(
                 "../../src/cholesky.c",
                 "../../src/cholesky_solve.c",
                 "../../src/dense.c",
+                "../../src/mul.c",
             ],
             include_dirs=["../../include", numpy.get_include()],
         )
