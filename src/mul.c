@@ -1,13 +1,11 @@
 #include <assert.h>
-#include <stdio.h>
+#include "sparsely/dense.h"
 #include "sparsely/mul.h"
 
-dense_t *csr_dot_dense(const csr_t *A, const dense_t *x) {
+dense_t csr_dot_dense(const csr_t *A, const dense_t *x) {
     assert(A->ncols == x->n);
 
-    // TODO: Use dense_empty to allocate y
-    dense_t *y = dense_create(A->nrows, NULL);
-    assert(y != NULL);
+    dense_t y = dense_empty(A->nrows);
 
     for (int i = 0; i < A->nrows; i++) {
         double sum = 0.0;
@@ -16,7 +14,7 @@ dense_t *csr_dot_dense(const csr_t *A, const dense_t *x) {
         for (int idx = start; idx < end; idx++) {
             sum += A->values[idx] * x->values[A->colind[idx]];
         }
-        y->values[i] = sum;
+        y.values[i] = sum;
     }
 
     return y;

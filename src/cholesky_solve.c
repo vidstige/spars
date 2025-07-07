@@ -60,12 +60,10 @@ void csr_solve_upper(const csr_t *L, const dense_t *b, dense_t *x) {
 
 void csr_solve_cholesky(const csr_t *L, const dense_t *b, dense_t *x) {
     int n = L->nrows;
-    dense_t *y = dense_create(n, NULL);
+    dense_t y = dense_zeros(n);
 
-    if (!y) return;
+    csr_solve_lower(L, b, &y);
+    csr_solve_upper(L, &y, x);
 
-    csr_solve_lower(L, b, y);
-    csr_solve_upper(L, y, x);
-
-    dense_destroy(y);
+    dense_destroy(&y);
 }
