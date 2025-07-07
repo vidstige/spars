@@ -161,3 +161,48 @@ csr_t *csr_mul_csr(const csr_t *A, const csr_t *B) {
 
     return csr_create(m, n, nnz, rowptr, colind, values);
 }
+
+csr_t *csc_transpose_to_csr(const csc_t *A) {
+    int m = A->nrows;
+    int n = A->ncols;
+    int nnz = A->nnz;
+
+    int *row_counts = (int *)calloc(m, sizeof(int));
+    if (!row_counts) return NULL;
+
+    // Count entries per row
+    for (int idx = 0; idx < nnz; idx++)
+        row_counts[A->rowind[idx]]++;
+
+    int *rowptr = (int *)malloc((m + 1) * sizeof(int));
+    if (!rowptr) { free(row_counts); return NULL; }
+
+    rowptr[0] = 0;
+    for (int i = 0; i < m; i++)
+        rowptr[i + 1] = rowptr[i] + row_counts[i];
+
+    int *colind = (int *)malloc(nnz * sizeof(int));
+    double *values = (double *)malloc(nnz * sizeof(double));
+    if (!colind || !values) {
+        free(row_counts);
+        free(rowptr);
+        free(colind);
+        free(values);
+        return NULL;
+    }
+
+    // Temp positions
+    memcpy(row_counts, rowptr, m * sizeof(int));
+
+    for (int j = 0; j < n; j++) {
+        for (int idx = A->colptr[j]; idx < A->colptr[j + 1]; idx++) {
+            int i = A->rowind[idx];
+            int dest = row_counts[i]++;
+            colind[dest] = j;
+            values[dest] = A->values[idx];
+        }
+    }
+
+    free(row_counts);
+    return csr_create(m, n, nnz, rowptr, colind, values);
+}
