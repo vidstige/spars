@@ -12,7 +12,7 @@ typedef struct {
 csr_t *csr_create(
     int nrows, int ncols, int nnz,
     int *rowptr, int *colind,
-    const double *values
+    double *values
 );
 
 void csr_destroy(csr_t *mat);

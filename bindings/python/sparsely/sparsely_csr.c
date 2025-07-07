@@ -11,6 +11,20 @@
 
 // ---------- Init and dealloc ----------
 
+// helper functions
+static int *copy_int_array(PyArrayObject *arr, int count) {
+    int *out = (int *)malloc(count * sizeof(int));
+    if (!out) return NULL;
+    memcpy(out, PyArray_DATA(arr), count * sizeof(int));
+    return out;
+}
+
+static double *copy_double_array(PyArrayObject *arr, int count) {
+    double *out = (double *)malloc(count * sizeof(double));
+    if (!out) return NULL;
+    memcpy(out, PyArray_DATA(arr), count * sizeof(double));
+    return out;
+}
 
 static int
 PyCSR_init(PyCSR *self, PyObject *args, PyObject *kwds)
@@ -62,12 +76,30 @@ PyCSR_init(PyCSR *self, PyObject *args, PyObject *kwds)
         goto fail;
     }
 
+    int *rowptr_copy = copy_int_array(rowptr_array, nrows + 1);
+    int *colind_copy = copy_int_array(colind_array, nnz);
+    double *values_copy = copy_double_array(values_array, nnz);
+
+    if (!rowptr_copy || !colind_copy || !values_copy) {
+        free(rowptr_copy);
+        free(colind_copy);
+        free(values_copy);
+        PyErr_SetString(PyExc_RuntimeError, "Memory allocation failed in copy.");
+        goto fail;
+    }
+
     self->csr = csr_create(
         nrows, ncols, nnz,
-        (int *)PyArray_DATA(rowptr_array),
-        (int *)PyArray_DATA(colind_array),
-        (double *)PyArray_DATA(values_array)
+        rowptr_copy, colind_copy, values_copy
     );
+
+    if (!self->csr) {
+        free(rowptr_copy);
+        free(colind_copy);
+        free(values_copy);
+        PyErr_SetString(PyExc_RuntimeError, "Failed to create CSR matrix.");
+        goto fail;
+    }
 
     if (!self->csr) {
         fprintf(stderr, "[PyCSR_init] ERROR: csr_create returned NULL!\n");

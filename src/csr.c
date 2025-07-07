@@ -5,47 +5,23 @@
 csr_t *csr_create(
     int nrows, int ncols, int nnz,
     int *rowptr, int *colind,
-    const double *values
+    double *values
 ) {
     if (!rowptr || !colind || !values) return NULL;
-    if (nrows <= 0 || ncols <= 0 || nnz < 0) return NULL;
 
-    csr_t *mat = (csr_t *)malloc(sizeof(csr_t));
-    if (!mat) return NULL;
+    csr_t *csr = malloc(sizeof(csr_t));
+    if (!csr) return NULL;
 
-    mat->nrows = nrows;
-    mat->ncols = ncols;
-    mat->nnz = nnz;
+    csr->nrows = nrows;
+    csr->ncols = ncols;
+    csr->nnz = nnz;
+    csr->rowptr = rowptr;
+    csr->colind = colind;
+    csr->values = values;
 
-    // Allocate and copy rowptr
-    mat->rowptr = (int *)malloc((nrows + 1) * sizeof(int));
-    if (!mat->rowptr) {
-        free(mat);
-        return NULL;
-    }
-    memcpy(mat->rowptr, rowptr, (nrows + 1) * sizeof(int));
-
-    // Allocate and copy colind
-    mat->colind = (int *)malloc(nnz * sizeof(int));
-    if (!mat->colind) {
-        free(mat->rowptr);
-        free(mat);
-        return NULL;
-    }
-    memcpy(mat->colind, colind, nnz * sizeof(int));
-
-    // Allocate and copy values
-    mat->values = (double *)malloc(nnz * sizeof(double));
-    if (!mat->values) {
-        free(mat->colind);
-        free(mat->rowptr);
-        free(mat);
-        return NULL;
-    }
-    memcpy(mat->values, values, nnz * sizeof(double));
-
-    return mat;
+    return csr;
 }
+
 
 void csr_destroy(csr_t *mat) {
     if (!mat) return;
