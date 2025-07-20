@@ -1,7 +1,6 @@
 from typing import Tuple
 import numpy as np
-import pytest
-from sparsely import CSR, LIL, lil_array, csr_array
+from sparsely import LIL, lil_array, csr_array
 
 
 def random_lil(shape: Tuple[int, int], density: float, seed: int) -> LIL:
@@ -15,37 +14,16 @@ def random_lil(shape: Tuple[int, int], density: float, seed: int) -> LIL:
     return a
 
 
-def as_csr(lil: LIL) -> CSR:
-    return lil.tocsr()
-
-
-def as_csc(lil: LIL) -> CSR:
-    return lil.tocsc()
-
-
-def as_lil(lil: LIL) -> LIL:
-    return lil
-
-
-@pytest.mark.parametrize("left_type,left_shape,left_seed", [
-    (as_csr, (10, 10), 42),
-])
-@pytest.mark.parametrize("right_type,right_shape,right_seed", [
-    (as_csr, (10, 10), 42),
-])
-def test_sparse_matrix_multiplication(
-    left_type, left_shape, left_seed,
-    right_type, right_shape, right_seed,
-):
-    lhs = left_type(random_lil(left_shape, density=0.1, seed=left_seed))
-    rhs = right_type(random_lil(right_shape, density=0.1, seed=right_seed))
+def test_csr_dot_csr():
+    seed = 42
+    lhs = random_lil(shape=(10, 10), density=0.1, seed=seed).tocsr()
+    rhs = random_lil(shape=(10, 10), density=0.1, seed=seed).tocsr()
 
     actual = lhs @ rhs
 
     # Dense ground truth
-    C_expected = lhs.todense() @ rhs.todense()
-
-    np.testing.assert_allclose(actual.todense(), C_expected, rtol=1e-6, atol=1e-12)
+    expected = lhs.todense() @ rhs.todense()
+    np.testing.assert_allclose(actual.todense(), expected, rtol=1e-6, atol=1e-12)
 
 
 def test_csc_mul_dense():
