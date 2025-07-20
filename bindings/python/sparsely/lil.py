@@ -72,6 +72,9 @@ class LIL:
     def T(self):
         return self.transpose()
 
+    def tocsc(self):
+        return self.T.tocsr().T
+
     def tocsr(self):
         rowptr = [0]
         colind = []
