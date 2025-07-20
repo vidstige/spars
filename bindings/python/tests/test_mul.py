@@ -1,20 +1,21 @@
+from typing import Tuple
 import numpy as np
-from sparsely import lil_array, csr_array
+from sparsely import LIL, lil_array, csr_array
+
+
+def random_lil(shape: Tuple[int, int], density: float, seed: int) -> LIL:
+    """Create a random LIL sparse matrix with given shape and density."""
+    rng = np.random.default_rng(123)
+    a = lil_array(shape)
+    for i in range(shape[0]):
+        for j in range(shape[1]):
+            if np.random.rand() < density:
+                a[i, j] = rng.standard_normal()
+    return a
 
 
 def test_csr_mul_csr_sparse():
-    np.random.seed(42)
-
-    size = 10
-    density = 0.2
-
-    # Create random sparse matrix A
-    A_lil = lil_array((size, size))
-    for i in range(size):
-        for j in range(size):
-            if np.random.rand() < density:
-                A_lil[i, j] = np.random.randn()
-
+    A_lil = random_lil((10, 10), density=0.2, seed=42)
     A_csr = A_lil.tocsr()
 
     # A @ A
