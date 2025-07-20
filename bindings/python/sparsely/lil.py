@@ -55,6 +55,22 @@ class LIL:
     def __repr__(self) -> str:
         nrows, ncols = self.shape
         return f"LIL(nrows={nrows}, ncols={ncols}, rows={self.rows})"
+    
+    def transpose(self):
+        nrows, ncols = self.shape
+        new_rows = [[] for _ in range(ncols)]
+
+        for row_idx, row in enumerate(self.rows):
+            for col_idx, val in row:
+                new_rows[col_idx].append((row_idx, val))
+
+        result = LIL((ncols, nrows))
+        result.rows = new_rows
+        return result
+
+    @property
+    def T(self):
+        return self.transpose()
 
     def tocsr(self):
         rowptr = [0]
