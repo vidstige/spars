@@ -1,6 +1,6 @@
 from typing import Tuple
 import numpy as np
-from sparsely import LIL, lil_array, csr_array
+from sparsely import CSR, LIL, lil_array, csr_array
 
 
 def random_lil(shape: Tuple[int, int], density: float, seed: int) -> LIL:
@@ -14,10 +14,30 @@ def random_lil(shape: Tuple[int, int], density: float, seed: int) -> LIL:
     return a
 
 
+def random_csr(shape: Tuple[int, int], density: float, seed: int) -> CSR:
+    return random_lil(shape, density, seed).tocsr()
+
+
+def random_csc(shape: Tuple[int, int], density: float, seed: int) -> CSR:
+    return random_lil(shape, density, seed).tocsc()
+
+
 def test_csr_dot_csr():
     seed = 42
-    lhs = random_lil(shape=(10, 10), density=0.1, seed=seed).tocsr()
-    rhs = random_lil(shape=(10, 10), density=0.1, seed=seed).tocsr()
+    lhs = random_csr(shape=(10, 10), density=0.1, seed=seed)
+    rhs = random_csr(shape=(10, 10), density=0.1, seed=seed)
+
+    actual = lhs @ rhs
+
+    # Dense ground truth
+    expected = lhs.todense() @ rhs.todense()
+    np.testing.assert_allclose(actual.todense(), expected, rtol=1e-6, atol=1e-12)
+
+
+def test_csc_mul_csr():
+    seed = 42
+    lhs = random_csc(shape=(10, 10), density=0.1, seed=seed)
+    rhs = random_csr(shape=(10, 10), density=0.1, seed=seed)
 
     actual = lhs @ rhs
 
