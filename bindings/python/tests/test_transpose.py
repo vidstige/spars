@@ -1,5 +1,5 @@
 import numpy as np
-from sparsely import CSR, CSC
+from sparsely import CSR, CSC, LIL
 from .matrices import easy3x3
 
 
@@ -12,6 +12,12 @@ def test_csr_transpose():
 def test_csc_transpose():
     A_dense = easy3x3()
     A = CSC.from_dense(A_dense)
+    np.testing.assert_allclose(A.T.todense(), A_dense.T)
+
+
+def test_lil_transpose():
+    A_dense = easy3x3()
+    A = LIL.from_dense(A_dense)
     np.testing.assert_allclose(A.T.todense(), A_dense.T)
 
 

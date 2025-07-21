@@ -72,6 +72,13 @@ class LIL:
     def T(self):
         return self.transpose()
 
+    def todense(self) -> np.ndarray:
+        dense = np.zeros(self.shape, dtype=np.float64)
+        for i, row in enumerate(self.rows):
+            for j, val in row:
+                dense[i, j] = val
+        return dense
+
     def tocsc(self):
         return self.T.tocsr().T
 
