@@ -293,3 +293,66 @@ dense_t csc_mul_dense(const csc_t *A, const dense_t *x) {
 
     return y;
 }
+
+csr_t* csc_to_csr(const csc_t* csc) {
+    int nrows = csc->nrows;
+    int ncols = csc->ncols;
+    int nnz = csc->nnz;
+
+    // Allocate csr_t struct
+    csr_t* csr = (csr_t*)malloc(sizeof(csr_t));
+    if (!csr) return NULL;
+
+    csr->nrows = nrows;
+    csr->ncols = ncols;
+    csr->nnz = nnz;
+    csr->rowptr = (int*)calloc(nrows + 1, sizeof(int));
+    csr->colind = (int*)malloc(nnz * sizeof(int));
+    csr->values = (double*)malloc(nnz * sizeof(double));
+
+    if (!csr->rowptr || !csr->colind || !csr->values) {
+        // Cleanup if any allocation fails
+        free(csr->rowptr);
+        free(csr->colind);
+        free(csr->values);
+        free(csr);
+        return NULL;
+    }
+
+    // Step 1: Count number of entries in each row
+    for (int col = 0; col < ncols; ++col) {
+        for (int idx = csc->colptr[col]; idx < csc->colptr[col + 1]; ++idx) {
+            int row = csc->rowind[idx];
+            assert(0 <= row && row < nrows);
+            csr->rowptr[row + 1]++;
+        }
+    }
+
+    // Step 2: Cumulative sum for rowptr
+    for (int i = 0; i < nrows; ++i) {
+        csr->rowptr[i + 1] += csr->rowptr[i];
+    }
+
+    // Step 3: Fill colind and values using a row-wise offset
+    int* offset = (int*)malloc(nrows * sizeof(int));
+    if (!offset) {
+        free(csr->rowptr);
+        free(csr->colind);
+        free(csr->values);
+        free(csr);
+        return NULL;
+    }
+    memcpy(offset, csr->rowptr, nrows * sizeof(int));
+
+    for (int col = 0; col < ncols; ++col) {
+        for (int idx = csc->colptr[col]; idx < csc->colptr[col + 1]; ++idx) {
+            int row = csc->rowind[idx];
+            int dest = offset[row]++;
+            csr->colind[dest] = col;
+            csr->values[dest] = csc->values[idx];
+        }
+    }
+
+    free(offset);
+    return csr;
+}
