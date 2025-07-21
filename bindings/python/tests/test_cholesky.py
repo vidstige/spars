@@ -6,7 +6,7 @@ from .matrices import easy2x2
 
 
 def test_factorization():
-    A = easy2x2()
+    A = easy2x2().tocsr()
     L = cholesky(A)
 
     expected = np.array([
@@ -17,7 +17,7 @@ def test_factorization():
 
 
 def test_solve_2x2():
-    A = easy2x2()
+    A = easy2x2().tocsr()
     b = np.array([8.0, 8.0])
     L = cholesky(A)  # find factorization
     L.sort_indices()  # sort indices to ensure diagonal is last
