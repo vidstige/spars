@@ -1,3 +1,4 @@
+from typing import Union
 import numpy as np
 from ._sparse_c import CSC as _RawCSC, csc_mul_csr, csc_mul_dense
 
@@ -5,6 +6,12 @@ from ._sparse_c import CSC as _RawCSC, csc_mul_csr, csc_mul_dense
 class CSC:
     def __init__(self, *args, **kwargs):
         self._c_obj = _RawCSC(*args, **kwargs)
+   
+    @classmethod
+    def from_dense(cls, array_like: Union[np.ndarray, list[list[float]]]) -> 'CSC':
+        from .lil import LIL
+        lil = LIL.from_dense(array_like)
+        return lil.tocsc()
 
     @classmethod
     def from_c_obj(cls, c_obj):

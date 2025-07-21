@@ -1,6 +1,7 @@
 from typing import Tuple
 import numpy as np
-from sparsely import CSR, LIL, lil_array, csr_array
+from sparsely import CSC, CSR, LIL, lil_array, csr_array
+from .matrices import easy3x3
 
 
 def random_lil(shape: Tuple[int, int], density: float, seed: int) -> LIL:
@@ -46,19 +47,20 @@ def test_csc_mul_csr():
     np.testing.assert_allclose(actual.todense(), expected, rtol=1e-6, atol=1e-12)
 
 
-def test_csc_mul_dense():
-    A_dense = np.array([
-        [1, 0, 2],
-        [0, 3, 0],
-        [4, 0, 5]
-    ])
-
-    A = csr_array.from_dense(A_dense)
-    AT = A.T
+# matrix vector multiplication tests
+def test_csr_mul_dense():
+    A_dense = easy3x3()
+    A = CSR.from_dense(A_dense)
     x = np.array([1.0, 2.0, 3.0])
+    result = A @ x
+    expected = A_dense @ x
+    np.testing.assert_allclose(result, expected)
 
-    result = AT @ x
 
-    expected = A_dense.T @ x
-
+def test_csc_mul_dense():
+    A_dense = easy3x3()
+    A = CSC.from_dense(A_dense)
+    x = np.array([1.0, 2.0, 3.0])
+    result = A @ x
+    expected = A_dense @ x
     np.testing.assert_allclose(result, expected)
