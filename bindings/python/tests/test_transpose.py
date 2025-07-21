@@ -3,20 +3,16 @@ from sparsely import CSR, CSC
 from .matrices import easy3x3
 
 
-def test_csr_transpose_roundtrip():
+def test_csr_transpose():
     A_dense = easy3x3()
     A = CSR.from_dense(A_dense)
-    A_T = A.T
-    A_back = A_T.T
-    np.testing.assert_allclose(A_back.todense(), A_dense)
+    np.testing.assert_allclose(A.T.todense(), A_dense.T)
 
 
-def test_csc_transpose_roundtrip():
+def test_csc_transpose():
     A_dense = easy3x3()
     A = CSC.from_dense(A_dense)
-    A_T = A.T
-    A_back = A_T.T
-    np.testing.assert_allclose(A_back.todense(), A_dense)
+    np.testing.assert_allclose(A.T.todense(), A_dense.T)
 
 
 def test_csr_transpose_type():
