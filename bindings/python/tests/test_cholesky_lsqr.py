@@ -2,20 +2,28 @@ import numpy as np
 from sparsely import CSR, cholesky, solve_cholesky
 
 
-def xtest_cholesky_lsqr():
-    # Example matrix A and vector b
-    A = CSR.from_dense([[2.0, 1.0], [1.0, 2.0]])
-    b = np.array([8.0, 8.0])
+def test_cholesky_lsqr_against_numpy():
+    # Overdetermined system: 3 equations, 2 unknowns
+    dense_A = np.array([
+        [1.0, 1.0],
+        [1.0, 2.0],
+        [1.0, 3.0],
+    ])
+    b = np.array([6.0, 0.0, 0.0])
 
-    # Compute the Cholesky factorization of A^T @ A
+    A = CSR.from_dense(dense_A)
+
     ATA = A.T @ A
     ATb = A.T @ b
-    factor = cholesky(ATA)
+    L = cholesky(ATA)
+    L.sort_indices()  # sort indices to ensure diagonal is last
+    actual = solve_cholesky(L, ATb)
 
-    # Solve for x using the factorization
-    x = solve_cholesky(factor, ATb)
+    # Use NumPy to compute expected solution
+    ATA = dense_A.T @ dense_A
+    ATb = dense_A.T @ b
+    L = np.linalg.cholesky(ATA)
+    y = np.linalg.solve(L, ATb)
+    expected = np.linalg.solve(L.T, y)
 
-    # Expected solution
-    expected = np.array([1.0, 2.0])
-
-    np.testing.assert_allclose(x, expected, rtol=1e-6, atol=1e-12)
+    np.testing.assert_allclose(actual, expected, rtol=1e-6, atol=1e-12)
