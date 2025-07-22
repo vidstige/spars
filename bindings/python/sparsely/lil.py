@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 
 import numpy as np
 
@@ -10,7 +10,7 @@ class LIL:
     def __init__(self, shape: Tuple[int, int]):
         self.shape = shape
         nrows, _ = shape
-        self.rows = [[] for _ in range(nrows)]
+        self.rows: List[List[Tuple[int, float]]] = [[] for _ in range(nrows)]
 
     @classmethod
     def from_dense(cls, array_like: Union[np.ndarray, list[list[float]]]) -> 'LIL':
