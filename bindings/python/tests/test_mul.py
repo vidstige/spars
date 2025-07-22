@@ -19,7 +19,7 @@ def random_csr(shape: Tuple[int, int], density: float, seed: int) -> CSR:
     return random_lil(shape, density, seed).tocsr()
 
 
-def random_csc(shape: Tuple[int, int], density: float, seed: int) -> CSR:
+def random_csc(shape: Tuple[int, int], density: float, seed: int) -> CSC:
     return random_lil(shape, density, seed).tocsc()
 
 
