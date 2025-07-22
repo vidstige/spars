@@ -2,28 +2,9 @@ from typing import Callable, Tuple
 
 import numpy as np
 import pytest
-from sparsely import CSC, CSR, LIL, lil_array
+from sparsely import CSC, CSR
 
-from .matrices import easy3x3
-
-
-def random_lil(shape: Tuple[int, int], density: float, seed: int) -> LIL:
-    """Create a random LIL sparse matrix with given shape and density."""
-    rng = np.random.default_rng(seed)
-    a = lil_array(shape)
-    for i in range(shape[0]):
-        for j in range(shape[1]):
-            if np.random.rand() < density:
-                a[i, j] = rng.standard_normal()
-    return a
-
-
-def random_csr(shape: Tuple[int, int], density: float, seed: int) -> CSR:
-    return random_lil(shape, density, seed).tocsr()
-
-
-def random_csc(shape: Tuple[int, int], density: float, seed: int) -> CSC:
-    return random_lil(shape, density, seed).tocsc()
+from .matrices import easy3x3, random_csc, random_csr
 
 
 @pytest.mark.parametrize("shape,density", [
