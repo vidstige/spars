@@ -3,7 +3,7 @@ from typing import Tuple, Union
 import numpy as np
 
 from .csr import CSR
-from . import _sparse_c
+from ._sparse_c import CSR as _RawCSR
 
 
 class LIL:
@@ -102,7 +102,7 @@ class LIL:
         assert colind.shape[0] == values.shape[0]
 
         nrows, ncols = self.shape
-        return CSR.from_c_obj(_sparse_c.CSR(
+        return CSR.from_c_obj(_RawCSR(
             nrows=nrows,
             ncols=ncols,
             rowptr=rowptr,
