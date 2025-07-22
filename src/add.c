@@ -5,7 +5,7 @@
 #include <assert.h>
 
 // assumes that the indices in A and B are sorted
-csr_t *csr_add(const csr_t *A, const csr_t *B) {
+csr_t *csr_add_csr(const csr_t *A, const csr_t *B) {
     assert(A->nrows == B->nrows);
     assert(A->ncols == B->ncols);
 

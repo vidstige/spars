@@ -1,7 +1,7 @@
 from typing import Union
 import numpy as np
 
-from ._sparse_c import CSR as _RawCSR, csr_mul_dense, csr_mul_csr
+from ._sparse_c import CSR as _RawCSR, csr_mul_dense, csr_mul_csr, csr_add_csr
 
 
 class CSR:
@@ -41,6 +41,12 @@ class CSR:
 
     def __matmul__(self, rhs):
         return self.dot(rhs)
+
+    def add(self, other: 'CSR') -> 'CSR':
+         return CSR.from_c_obj(csr_add_csr(self._c_obj, other._c_obj))
+
+    def __add__(self, other: 'CSR') -> 'CSR':
+        return self.add(other)
 
     def __getitem__(self, key):
         return self._c_obj[key]
