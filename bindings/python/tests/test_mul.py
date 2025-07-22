@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from sparsely import CSC, CSR
 
-from .matrices import easy3x3, random_csc, random_csr
+from .matrices import easy3x3, easy3x4, random_csc, random_csr
 
 
 @pytest.mark.parametrize("shape,density", [
@@ -40,6 +40,7 @@ def test_csc_mul_csr(shape: Tuple[int, int], density: float):
 # matrix vector multiplication tests
 @pytest.mark.parametrize("create_matrix,x", [
     (easy3x3, np.array([1.0, 2.0, 3.0])),
+    (easy3x4, np.array([1.0, 2.0, 3.0, 4.0])),
 ])
 def test_csr_mul_dense(create_matrix: Callable[[], np.ndarray], x: np.ndarray):
     A_dense = create_matrix()
@@ -51,6 +52,7 @@ def test_csr_mul_dense(create_matrix: Callable[[], np.ndarray], x: np.ndarray):
 
 @pytest.mark.parametrize("create_matrix,x", [
     (easy3x3, np.array([1.0, 2.0, 3.0])),
+    (easy3x4, np.array([1.0, 2.0, 3.0, 4.0])),
 ])
 def test_csc_mul_dense(create_matrix: Callable[[], np.ndarray], x: np.ndarray):
     A_dense = create_matrix()
