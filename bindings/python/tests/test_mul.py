@@ -1,6 +1,9 @@
-from typing import Tuple
+from typing import Callable, Tuple
+
 import numpy as np
-from sparsely import CSC, CSR, LIL, lil_array, csr_array
+import pytest
+from sparsely import CSC, CSR, LIL, lil_array
+
 from .matrices import easy3x3
 
 
@@ -23,10 +26,13 @@ def random_csc(shape: Tuple[int, int], density: float, seed: int) -> CSC:
     return random_lil(shape, density, seed).tocsc()
 
 
-def test_csr_dot_csr():
+@pytest.mark.parametrize("shape,density", [
+    ((10, 10), 0.1),
+])
+def test_csr_dot_csr(shape: Tuple[int, int], density: float):
     seed = 42
-    lhs = random_csr(shape=(10, 10), density=0.1, seed=seed)
-    rhs = random_csr(shape=(10, 10), density=0.1, seed=seed)
+    lhs = random_csr(shape=shape, density=density, seed=seed)
+    rhs = random_csr(shape=shape, density=density, seed=seed)
 
     actual = lhs @ rhs
 
@@ -35,10 +41,13 @@ def test_csr_dot_csr():
     np.testing.assert_allclose(actual.todense(), expected, rtol=1e-6, atol=1e-12)
 
 
-def test_csc_mul_csr():
+@pytest.mark.parametrize("shape,density", [
+    ((10, 10), 0.1),
+])
+def test_csc_mul_csr(shape: Tuple[int, int], density: float):
     seed = 42
-    lhs = random_csc(shape=(10, 10), density=0.1, seed=seed)
-    rhs = random_csr(shape=(10, 10), density=0.1, seed=seed)
+    lhs = random_csc(shape=shape, density=density, seed=seed)
+    rhs = random_csr(shape=shape, density=density, seed=seed)
 
     actual = lhs @ rhs
 
@@ -48,19 +57,23 @@ def test_csc_mul_csr():
 
 
 # matrix vector multiplication tests
-def test_csr_mul_dense():
-    A_dense = easy3x3()
+@pytest.mark.parametrize("create_matrix,x", [
+    (easy3x3, np.array([1.0, 2.0, 3.0])),
+])
+def test_csr_mul_dense(create_matrix: Callable[[], np.ndarray], x: np.ndarray):
+    A_dense = create_matrix()
     A = CSR.from_dense(A_dense)
-    x = np.array([1.0, 2.0, 3.0])
     result = A @ x
     expected = A_dense @ x
     np.testing.assert_allclose(result, expected)
 
 
-def test_csc_mul_dense():
-    A_dense = easy3x3()
+@pytest.mark.parametrize("create_matrix,x", [
+    (easy3x3, np.array([1.0, 2.0, 3.0])),
+])
+def test_csc_mul_dense(create_matrix: Callable[[], np.ndarray], x: np.ndarray):
+    A_dense = create_matrix()
     A = CSC.from_dense(A_dense)
-    x = np.array([1.0, 2.0, 3.0])
     result = A @ x
     expected = A_dense @ x
     np.testing.assert_allclose(result, expected)
