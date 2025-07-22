@@ -6,7 +6,7 @@ from .matrices import easy3x3
 
 def random_lil(shape: Tuple[int, int], density: float, seed: int) -> LIL:
     """Create a random LIL sparse matrix with given shape and density."""
-    rng = np.random.default_rng(123)
+    rng = np.random.default_rng(seed)
     a = lil_array(shape)
     for i in range(shape[0]):
         for j in range(shape[1]):
