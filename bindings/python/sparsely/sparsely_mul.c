@@ -12,7 +12,9 @@ extern PyTypeObject PyCSRType;
 extern PyTypeObject PyCSCType;
 
 // -------- csr_mul_dense wrapper --------
-static PyObject *py_csr_mul_dense(PyObject *self, PyObject *args) {
+static PyObject *
+py_csr_mul_dense(PyObject *self, PyObject *args)
+{
     PyObject *csr_obj;
     PyObject *x_obj;
 
@@ -60,7 +62,9 @@ static PyObject *py_csr_mul_dense(PyObject *self, PyObject *args) {
 }
 
 // -------- csr_mul_csr wrapper --------
-static PyObject *py_csr_mul_csr(PyObject *self, PyObject *args) {
+static PyObject *
+py_csr_mul_csr(PyObject *self, PyObject *args)
+{
     PyObject *lhs_obj;
     PyObject *rhs_obj;
 

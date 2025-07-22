@@ -119,7 +119,9 @@ static void PyCSC_dealloc(PyCSC *self) {
 }
 
 // ----- .shape property -----
-static PyObject *PyCSC_get_shape(PyCSC *self, void *closure) {
+static PyObject *
+PyCSC_get_shape(PyCSC *self, void *closure)
+{
     return Py_BuildValue("(ii)", self->csc->nrows, self->csc->ncols);
 }
 
@@ -150,7 +152,9 @@ static PyGetSetDef PyCSC_getsetters[] = {
 };
 
 // ----- .todense() method -----
-static PyObject *PyCSC_todense(PyCSC *self, PyObject *Py_UNUSED(ignored)) {
+static PyObject *
+PyCSC_todense(PyCSC *self, PyObject *Py_UNUSED(ignored))
+{
     npy_intp dims[2] = {self->csc->nrows, self->csc->ncols};
     PyObject *result = PyArray_ZEROS(2, dims, NPY_FLOAT64, 0);
     if (!result) return NULL;
@@ -170,7 +174,9 @@ static PyObject *PyCSC_todense(PyCSC *self, PyObject *Py_UNUSED(ignored)) {
 }
 
 // index operator
-static PyObject *PyCSC_subscript(PyCSC *self, PyObject *key) {
+static PyObject *
+PyCSC_subscript(PyCSC *self, PyObject *key)
+{
     // Expect key as tuple (i, j)
     if (!PyTuple_Check(key) || PyTuple_Size(key) != 2) {
         PyErr_SetString(PyExc_TypeError, "CSC indices must be a 2-tuple");
