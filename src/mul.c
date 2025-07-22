@@ -79,6 +79,7 @@ csc_t *csr_transpose_to_csc(const csr_t *A) {
     return csc_create(n, m, nnz, colptr, rowind, values);
 }
 
+// Fast matrix multiplication using Gustavson's algorithm
 csr_t *csr_mul_csr(const csr_t *A, const csr_t *B) {
     assert(A->ncols == B->nrows);
 
@@ -89,74 +90,87 @@ csr_t *csr_mul_csr(const csr_t *A, const csr_t *B) {
     int alloc_nnz = 4 * (A->nnz + B->nnz);  // initial guess
     int *colind = (int *)malloc(alloc_nnz * sizeof(int));
     double *values = (double *)malloc(alloc_nnz * sizeof(double));
-    if (!rowptr || !colind || !values) {
-        free(rowptr); free(colind); free(values);
-        return NULL;
-    }
+    if (!rowptr || !colind || !values) goto fail1;
 
-    // Temporary accumulators
+    // Sparse accumulator setup
     double *accum = (double *)calloc(n, sizeof(double));
-    int *marker = (int *)malloc(n * sizeof(int));
-    if (!accum || !marker) {
-        free(rowptr); free(colind); free(values);
-        free(accum); free(marker);
-        return NULL;
-    }
+    int *next = (int *)malloc(n * sizeof(int));
+    if (!accum || !next) goto fail2;
+
+    // Initialize next array to -1
+    for (int j = 0; j < n; j++) next[j] = -1;
 
     int nnz = 0;
     rowptr[0] = 0;
 
     for (int i = 0; i < m; i++) {
-        int count = 0;
+        int head = -2;
 
-        // Reset marker
-        for (int j = 0; j < n; j++) marker[j] = -1;
-
-        // Accumulate A's row i * B
+        // Accumulate row i of A times B
         for (int a_idx = A->rowptr[i]; a_idx < A->rowptr[i + 1]; a_idx++) {
             int k = A->colind[a_idx];
+            assert(k >= 0 && k < B->nrows);
             double Aval = A->values[a_idx];
 
-            // Row k of B
             for (int b_idx = B->rowptr[k]; b_idx < B->rowptr[k + 1]; b_idx++) {
                 int j = B->colind[b_idx];
+                assert(j >= 0 && j < n);
                 double Bval = B->values[b_idx];
 
-                if (marker[j] < rowptr[i]) {
-                    marker[j] = rowptr[i] + count;
+                if (next[j] == -1) {
+                    next[j] = head;
+                    head = j;
                     accum[j] = Aval * Bval;
-                    count++;
                 } else {
                     accum[j] += Aval * Bval;
                 }
             }
         }
 
-        // Store results
-        for (int j = 0; j < n; j++) {
-            if (marker[j] >= rowptr[i] && accum[j] != 0.0) {
-                if (nnz >= alloc_nnz) {
-                    alloc_nnz *= 2;
-                    colind = (int *)realloc(colind, alloc_nnz * sizeof(int));
-                    values = (double *)realloc(values, alloc_nnz * sizeof(double));
-                    if (!colind || !values) {
-                        free(rowptr); free(colind); free(values);
-                        free(accum); free(marker);
-                        return NULL;
-                    }
+        rowptr[i + 1] = rowptr[i];
+        int j = head;
+        while (j != -2) {
+            int next_j = next[j];
+
+            if (nnz >= alloc_nnz) {
+                alloc_nnz *= 2;
+                int *new_colind = realloc(colind, alloc_nnz * sizeof(int));
+                double *new_values = realloc(values, alloc_nnz * sizeof(double));
+                if (!new_colind || !new_values) {
+                    free(new_colind);
+                    free(new_values);
+                    goto fail2;
                 }
-                colind[nnz] = j;
-                values[nnz] = accum[j];
-                nnz++;
+                colind = new_colind;
+                values = new_values;
             }
+
+            colind[nnz] = j;
+            values[nnz] = accum[j];
+            nnz++;
+            rowptr[i + 1]++;
+
+            accum[j] = 0.0;
+            next[j] = -1;
+            j = next_j;
         }
-        rowptr[i + 1] = nnz;
     }
 
     free(accum);
-    free(marker);
+    free(next);
 
+    colind = realloc(colind, nnz * sizeof(int));
+    values = realloc(values, nnz * sizeof(double));
     return csr_create(m, n, nnz, rowptr, colind, values);
+
+fail2:
+    free(accum);
+    free(next);
+fail1:
+    free(rowptr);
+    free(colind);
+    free(values);
+    return NULL;
 }
 
 csr_t *csc_transpose_to_csr(const csc_t *A) {
