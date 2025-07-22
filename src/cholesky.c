@@ -4,15 +4,13 @@
 
 #include "sparsely/csr.h"
 
-csr_t *cholesky_factor(const csr_t *A)
-{
+csr_t *cholesky_factor(const csr_t *A) {
     int n = A->nrows;
     if (A->ncols != n) {
         fprintf(stderr, "Matrix is not square.\n");
         return NULL;
     }
 
-    // Allocate result
     csr_t *L = malloc(sizeof(csr_t));
     if (!L) return NULL;
 
@@ -26,9 +24,10 @@ csr_t *cholesky_factor(const csr_t *A)
         return NULL;
     }
 
-    // Temporary workspace
-    double *work = calloc(n, sizeof(double));
-    if (!work) {
+    int *work_cols = malloc(n * sizeof(int));       // Max needed
+    double *work_values = malloc(n * sizeof(double)); // Same here
+    if (!work_cols || !work_values) {
+        free(work_cols); free(work_values);
         free(L->rowptr); free(L->colind); free(L->values); free(L);
         return NULL;
     }
@@ -37,25 +36,32 @@ csr_t *cholesky_factor(const csr_t *A)
     L->rowptr[0] = 0;
 
     for (int i = 0; i < n; i++) {
-        // 1. Clear work vector
-        for (int k = 0; k < n; k++) work[k] = 0.0;
+        int work_len = 0;
 
-        // 2. Scatter A[i,:] into work (only lower triangle)
+        // 1. Scatter A[i,:] into sparse work arrays (only lower triangle)
         for (int idx = A->rowptr[i]; idx < A->rowptr[i+1]; idx++) {
             int j = A->colind[idx];
             if (j <= i) {
-                work[j] = A->values[idx];
+                work_cols[work_len] = j;
+                work_values[work_len] = A->values[idx];
+                work_len++;
             }
         }
 
-        // 3. Compute L[i, j] for j < i
+        // 2. Compute L[i, j] for j < i
         for (int j = 0; j < i; j++) {
-            double sum = work[j];
+            // Find work[j]
+            double sum = 0.0;
+            for (int k = 0; k < work_len; k++) {
+                if (work_cols[k] == j) {
+                    sum = work_values[k];
+                    break;
+                }
+            }
 
             // Sparse dot-product: sum -= L[i,k] * L[j,k] for k < j
             int p_i = L->rowptr[i];
             int p_j = L->rowptr[j];
-
             while (p_i < nz && L->colind[p_i] < j && p_j < L->rowptr[j+1]) {
                 int col_i = L->colind[p_i];
                 int col_j = L->colind[p_j];
@@ -76,30 +82,59 @@ csr_t *cholesky_factor(const csr_t *A)
             double Lj_diag = L->values[diag_idx];
             double Lij = sum / Lj_diag;
 
-            // Store in work
-            work[j] = Lij;
+            // Update work[j]
+            for (int k = 0; k < work_len; k++) {
+                if (work_cols[k] == j) {
+                    work_values[k] = Lij;
+                    goto store_lij;
+                }
+            }
+            // If j wasn't already in work, append it
+            work_cols[work_len] = j;
+            work_values[work_len] = Lij;
+            work_len++;
 
-            // Store in CSR
+        store_lij:
             L->colind[nz] = j;
             L->values[nz] = Lij;
             nz++;
         }
 
-        // 4. Compute diagonal
-        double diag = work[i];
-        for (int k = 0; k < i; k++) {
-            diag -= work[k] * work[k];
+        // 3. Compute diagonal
+        double diag = 0.0;
+        int found_diag = 0;
+
+        for (int k = 0; k < work_len; k++) {
+            if (work_cols[k] == i) {
+                diag = work_values[k];
+                found_diag = 1;
+                break;
+            }
+        }
+
+        if (!found_diag) {
+            fprintf(stderr, "Missing diagonal entry at row %d\n", i);
+            free(work_cols); free(work_values);
+            free(L->rowptr); free(L->colind); free(L->values); free(L);
+            return NULL;
+        }
+
+        for (int k = 0; k < work_len; k++) {
+            int col = work_cols[k];
+            double val = work_values[k];
+            if (col < i) {
+                diag -= val * val;
+            }
         }
 
         if (diag <= 0.0) {
             fprintf(stderr, "Matrix not positive definite at row %d\n", i);
-            free(work);
+            free(work_cols); free(work_values);
             free(L->rowptr); free(L->colind); free(L->values); free(L);
             return NULL;
         }
 
         double Lii = sqrt(diag);
-
         L->colind[nz] = i;
         L->values[nz] = Lii;
         nz++;
@@ -107,6 +142,7 @@ csr_t *cholesky_factor(const csr_t *A)
         L->rowptr[i+1] = nz;
     }
 
-    free(work);
+    free(work_cols);
+    free(work_values);
     return L;
 }
