@@ -8,6 +8,7 @@ from .matrices import easy3x3, easy3x4, random_csc, random_csr
 
 
 @pytest.mark.parametrize("shape,density", [
+    ((3, 3), 1.0),
     ((10, 10), 0.1),
 ])
 def test_csr_dot_csr(shape: Tuple[int, int], density: float):
@@ -23,6 +24,7 @@ def test_csr_dot_csr(shape: Tuple[int, int], density: float):
 
 
 @pytest.mark.parametrize("shape,density", [
+    ((3, 3), 1.0),
     ((10, 10), 0.1),
 ])
 def test_csc_mul_csr(shape: Tuple[int, int], density: float):
