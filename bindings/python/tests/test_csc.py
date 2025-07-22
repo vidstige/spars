@@ -1,6 +1,9 @@
 import numpy as np
 import pytest
+
 from sparsely import CSC
+
+from .matrices import easy2x2
 
 
 def test_csc_raw():
@@ -44,3 +47,9 @@ def test_csc():
     ])
 
     np.testing.assert_allclose(dense, expected, rtol=1e-6, atol=1e-12)
+
+
+def test_tocsr():
+    csc = easy2x2().tocsc()
+    csr = csc.tocsr()
+    np.testing.assert_allclose(csr.todense(), csc.todense())

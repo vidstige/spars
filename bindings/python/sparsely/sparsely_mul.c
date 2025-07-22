@@ -171,12 +171,44 @@ wrap_csc_mul_dense(PyObject *self, PyObject *args)
     return result;
 }
 
+// -------- csc_to_csr wrapper --------
+static PyObject *
+py_csc_to_csr(PyObject *self, PyObject *args)
+{
+    PyObject *csc_obj;
+
+    if (!PyArg_ParseTuple(args, "O", &csc_obj))
+        return NULL;
+
+    if (!PyObject_TypeCheck(csc_obj, &PyCSCType)) {
+        PyErr_SetString(PyExc_TypeError, "Argument must be a CSC matrix.");
+        return NULL;
+    }
+
+    PyCSC *py_csc = (PyCSC *)csc_obj;
+    csr_t *csr = csc_to_csr(py_csc->csc);
+    if (!csr) {
+        PyErr_SetString(PyExc_RuntimeError, "Failed to convert CSC to CSR.");
+        return NULL;
+    }
+
+    PyObject *py_csr = PyObject_New(PyCSR, &PyCSRType);
+    if (!py_csr) {
+        csr_destroy(csr);  // free struct and buffers
+        return NULL;
+    }
+
+    ((PyCSR *)py_csr)->csr = csr;
+    return py_csr;
+}
+
 // -------- Method table --------
 static PyMethodDef mul_methods[] = {
     {"csr_mul_dense", py_csr_mul_dense, METH_VARARGS, "Multiply CSR with dense vector."},
     {"csr_mul_csr", py_csr_mul_csr, METH_VARARGS, "Multiply CSR with CSR (matrix multiplication)."},
     {"csc_mul_csr", wrap_csc_mul_csr, METH_VARARGS, "Multiply CSC * CSR → CSR."},
     {"csc_mul_dense", wrap_csc_mul_dense, METH_VARARGS, "CSC * dense → dense."},
+    {"csc_to_csr", py_csc_to_csr, METH_VARARGS, "Convert CSC matrix to CSR format."},
     {NULL, NULL, 0, NULL}
 };
 

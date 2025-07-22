@@ -1,6 +1,6 @@
 from typing import Union
 import numpy as np
-from ._sparse_c import CSC as _RawCSC, csc_mul_csr, csc_mul_dense
+from ._sparse_c import CSC as _RawCSC, csc_mul_csr, csc_mul_dense, csc_to_csr
 
 
 class CSC:
@@ -46,3 +46,7 @@ class CSC:
 
     def __getitem__(self, key):
         return self._c_obj[key]
+
+    def tocsr(self):
+        from .csr import CSR
+        return CSR.from_c_obj(csc_to_csr(self._c_obj))
