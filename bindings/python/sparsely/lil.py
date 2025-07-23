@@ -13,7 +13,7 @@ class LIL:
         self.rows: List[List[Tuple[int, float]]] = [[] for _ in range(nrows)]
 
     @classmethod
-    def from_dense(cls, array_like: Union[np.ndarray, list[list[float]]]) -> 'LIL':
+    def from_dense(cls, array_like: Union[np.ndarray, List[List[float]]]) -> 'LIL':
         dense = np.asarray(array_like, dtype=np.float64)
         if dense.ndim != 2:
             raise ValueError("from_dense expects a 2D array.")

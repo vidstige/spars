@@ -1,4 +1,4 @@
-from typing import Union
+from typing import List, Union
 import numpy as np
 
 from ._sparse_c import CSR as _RawCSR, csr_mul_dense, csr_mul_csr, csr_add_csr
@@ -9,7 +9,7 @@ class CSR:
         self._c_obj = _RawCSR(*args, **kwargs)
 
     @classmethod
-    def from_dense(cls, array_like: Union[np.ndarray, list[list[float]]]) -> 'CSR':
+    def from_dense(cls, array_like: Union[np.ndarray, List[List[float]]]) -> 'CSR':
         from .lil import LIL
         lil = LIL.from_dense(array_like)
         return lil.tocsr()
