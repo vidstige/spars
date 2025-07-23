@@ -1,0 +1,36 @@
+name: Verify Sparsely
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install build dependencies from pyproject.toml
+      run: |
+        pip install toml
+        python -c "import toml; print(' '.join(toml.load('bindings/python/pyproject.toml')['build-system']['requires']))" | xargs pip install
+
+    - name: Build and install Python extension
+      env:
+        SETUPTOOLS_ENABLE_FEATURES: legacy-editable
+      run: pip install --no-build-isolation -e 'bindings/python[dev]'
+
+    - name: Run tests
+      run: pytest bindings/python/tests/
