@@ -1,3 +1,5 @@
+/build/
+/src/*.o
 __pycache__/
 *.cpython*.so
-sparsely.egg-info/
+/sparsely.egg-info/
