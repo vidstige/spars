@@ -44,12 +44,12 @@ void dense_copy_to(dense_t *dst, const dense_t *src) {
         dst->values[i] = src->values[i];
 }
 
-dense_t *dense_clone(const dense_t *src) {
-    dense_t *copy = malloc(sizeof(dense_t));
-    copy->n = src->n;
-    copy->values = malloc(sizeof(double) * src->n);
+dense_t dense_clone(const dense_t *src) {
+    dense_t copy;
+    copy.n = src->n;
+    copy.values = malloc(sizeof(double) * src->n);
     for (int i = 0; i < src->n; ++i)
-        copy->values[i] = src->values[i];
+        copy.values[i] = src->values[i];
     return copy;
 }
 
