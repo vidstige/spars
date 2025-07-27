@@ -22,6 +22,23 @@ dense_t csr_mul_dense(const csr_t *A, const dense_t *x) {
     return y;
 }
 
+dense_t csr_transposed_mul_dense(const csr_t *A, const dense_t *x) {
+    assert(A->nrows == x->n);
+    dense_t y = dense_zeros(A->ncols); // Initialize result to zero
+
+    for (int i = 0; i < A->nrows; i++) {
+        double xi = x->values[i];
+        int start = A->rowptr[i];
+        int end = A->rowptr[i + 1];
+        for (int idx = start; idx < end; idx++) {
+            int j = A->colind[idx];
+            y.values[j] += A->values[idx] * xi;
+        }
+    }
+
+    return y;
+}
+
 csc_t *csr_transpose_to_csc(const csr_t *A) {
     int m = A->nrows;
     int n = A->ncols;
