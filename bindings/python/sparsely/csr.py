@@ -50,6 +50,3 @@ class CSR:
 
     def __getitem__(self, key):
         return self._c_obj[key]
-
-    def sort_indices(self):
-        return self._c_obj.sort_indices()

@@ -2,147 +2,117 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "sparsely/csr.h"
+#include "sparsely/csc.h"
 
-csr_t *cholesky_factor(const csr_t *A) {
-    int n = A->nrows;
-    if (A->ncols != n) {
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
+
+#include "sparsely/csr.h"
+#include "sparsely/csc.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
+
+#include "sparsely/csc.h"
+
+csc_t *cholesky_factor(const csc_t *A) {
+    int n = A->ncols;
+    if (A->nrows != n) {
         fprintf(stderr, "Matrix is not square.\n");
         return NULL;
     }
 
-    csr_t *L = malloc(sizeof(csr_t));
-    if (!L) return NULL;
+    int *colptr = calloc(n + 1, sizeof(int));
+    int *rowind = malloc(A->nnz * sizeof(int));    // Overallocate
+    double *values = malloc(A->nnz * sizeof(double));
+    if (!colptr || !rowind || !values) return NULL;
 
-    L->nrows = n;
-    L->ncols = n;
-    L->rowptr = calloc(n + 1, sizeof(int));
-    L->colind = malloc(A->nnz * sizeof(int));    // Overallocate for simplicity
-    L->values = malloc(A->nnz * sizeof(double));
-    if (!L->rowptr || !L->colind || !L->values) {
-        free(L->rowptr); free(L->colind); free(L->values); free(L);
-        return NULL;
-    }
-
-    int *work_cols = malloc(n * sizeof(int));       // Max needed
-    double *work_values = malloc(n * sizeof(double)); // Same here
-    if (!work_cols || !work_values) {
-        free(work_cols); free(work_values);
-        free(L->rowptr); free(L->colind); free(L->values); free(L);
-        return NULL;
-    }
+    double *work = calloc(n, sizeof(double));
+    int *pattern = malloc(n * sizeof(int));
+    if (!work || !pattern) return NULL;
 
     int nz = 0;
-    L->rowptr[0] = 0;
 
-    for (int i = 0; i < n; i++) {
-        int work_len = 0;
+    for (int j = 0; j < n; ++j) {
+        int pattern_len = 0;
 
-        // 1. Scatter A[i,:] into sparse work arrays (only lower triangle)
-        for (int idx = A->rowptr[i]; idx < A->rowptr[i+1]; idx++) {
-            int j = A->colind[idx];
-            if (j <= i) {
-                work_cols[work_len] = j;
-                work_values[work_len] = A->values[idx];
-                work_len++;
+        // Copy A[0..j, j] into work
+        for (int idx = A->colptr[j]; idx < A->colptr[j + 1]; ++idx) {
+            int i = A->rowind[idx];
+            if (i <= j) {
+                work[i] = A->values[idx];
+                pattern[pattern_len++] = i;
             }
         }
 
-        // 2. Compute L[i, j] for j < i
-        for (int j = 0; j < i; j++) {
-            // Find work[j]
-            double sum = 0.0;
-            for (int k = 0; k < work_len; k++) {
-                if (work_cols[k] == j) {
-                    sum = work_values[k];
+        // For all previous columns i < j
+        for (int i = 0; i < j; ++i) {
+            // Look for L[i,j] = work[i]
+            int diag_idx = -1;
+            for (int k = colptr[i]; k < colptr[i + 1]; ++k) {
+                if (rowind[k] == i) {
+                    diag_idx = k;
                     break;
                 }
             }
+            if (diag_idx == -1) continue; // skip column i if diagonal not found
 
-            // Sparse dot-product: sum -= L[i,k] * L[j,k] for k < j
-            int p_i = L->rowptr[i];
-            int p_j = L->rowptr[j];
-            while (p_i < nz && L->colind[p_i] < j && p_j < L->rowptr[j+1]) {
-                int col_i = L->colind[p_i];
-                int col_j = L->colind[p_j];
+            double Lii = values[diag_idx];
+            double Lij = work[i] / Lii;
 
-                if (col_i == col_j) {
-                    sum -= L->values[p_i] * L->values[p_j];
-                    p_i++;
-                    p_j++;
-                } else if (col_i < col_j) {
-                    p_i++;
-                } else {
-                    p_j++;
+            // Subtract outer product: work[k] -= Lij * L[i,k]
+            for (int k = colptr[i]; k < colptr[i + 1]; ++k) {
+                int row = rowind[k];
+                if (row >= i && row != i) {
+                    work[row] -= Lij * values[k];
                 }
             }
 
-            // Divide by L[j,j]
-            int diag_idx = L->rowptr[j+1] - 1;
-            double Lj_diag = L->values[diag_idx];
-            double Lij = sum / Lj_diag;
-
-            // Update work[j]
-            for (int k = 0; k < work_len; k++) {
-                if (work_cols[k] == j) {
-                    work_values[k] = Lij;
-                    goto store_lij;
-                }
-            }
-            // If j wasn't already in work, append it
-            work_cols[work_len] = j;
-            work_values[work_len] = Lij;
-            work_len++;
-
-        store_lij:
-            L->colind[nz] = j;
-            L->values[nz] = Lij;
-            nz++;
+            work[i] = Lij;
         }
 
-        // 3. Compute diagonal
-        double diag = 0.0;
-        int found_diag = 0;
-
-        for (int k = 0; k < work_len; k++) {
-            if (work_cols[k] == i) {
-                diag = work_values[k];
-                found_diag = 1;
-                break;
-            }
-        }
-
-        if (!found_diag) {
-            fprintf(stderr, "Missing diagonal entry at row %d\n", i);
-            free(work_cols); free(work_values);
-            free(L->rowptr); free(L->colind); free(L->values); free(L);
-            return NULL;
-        }
-
-        for (int k = 0; k < work_len; k++) {
-            int col = work_cols[k];
-            double val = work_values[k];
-            if (col < i) {
-                diag -= val * val;
-            }
+        // Compute and validate diagonal
+        double diag = work[j];
+        for (int k = 0; k < j; ++k) {
+            double Lij = work[k];
+            diag -= Lij * Lij;
         }
 
         if (diag <= 0.0) {
-            fprintf(stderr, "Matrix not positive definite at row %d\n", i);
-            free(work_cols); free(work_values);
-            free(L->rowptr); free(L->colind); free(L->values); free(L);
+            fprintf(stderr, "Matrix not positive definite at column %d\n", j);
+            free(colptr); free(rowind); free(values); free(work); free(pattern);
             return NULL;
         }
 
-        double Lii = sqrt(diag);
-        L->colind[nz] = i;
-        L->values[nz] = Lii;
-        nz++;
+        colptr[j] = nz;
+        for (int k = 0; k < j; ++k) {
+            if (work[k] != 0.0) {
+                rowind[nz] = k;
+                values[nz++] = work[k];
+            }
+        }
 
-        L->rowptr[i+1] = nz;
+        rowind[nz] = j;
+        values[nz++] = sqrt(diag);
+        colptr[j + 1] = nz;
+
+        // Clear work
+        for (int k = 0; k < pattern_len; ++k)
+            work[pattern[k]] = 0.0;
     }
 
-    free(work_cols);
-    free(work_values);
+    free(work);
+    free(pattern);
+
+    csc_t *L = malloc(sizeof(csc_t));
+    L->nrows = n;
+    L->ncols = n;
+    L->nnz = nz;
+    L->colptr = colptr;
+    L->rowind = realloc(rowind, nz * sizeof(int));
+    L->values = realloc(values, nz * sizeof(double));
     return L;
 }

@@ -153,6 +153,13 @@ static PyGetSetDef PyCSC_getsetters[] = {
 
 // ----- .todense() method -----
 static PyObject *
+PyCSC_sort_indices(PyCSC *self, PyObject *Py_UNUSED(ignored))
+{
+    csc_sort_indices(self->csc);
+    Py_RETURN_NONE;
+}
+
+static PyObject *
 PyCSC_todense(PyCSC *self, PyObject *Py_UNUSED(ignored))
 {
     npy_intp dims[2] = {self->csc->nrows, self->csc->ncols};
@@ -208,6 +215,7 @@ PyCSC_subscript(PyCSC *self, PyObject *key)
 }
 
 static PyMethodDef PyCSC_methods[] = {
+    {"sort_indices", (PyCFunction)PyCSC_sort_indices, METH_NOARGS, "Sort colind within rows and move diagonal to last."},
     {"todense", (PyCFunction)PyCSC_todense, METH_NOARGS, "Convert to dense NumPy array."},
     {NULL, NULL, 0, NULL}
 };

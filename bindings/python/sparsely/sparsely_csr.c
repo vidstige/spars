@@ -134,15 +134,6 @@ PyCSR_dealloc(PyCSR *self)
 
 
 // ---------- Methods ----------
-
-static PyObject *
-PyCSR_sort_indices(PyCSR *self, PyObject *Py_UNUSED(ignored))
-{
-    csr_sort_indices(self->csr);
-    Py_RETURN_NONE;
-}
-
-
 static PyObject *
 PyCSR_todense(PyCSR *self, PyObject *Py_UNUSED(ignored))
 {
@@ -193,7 +184,6 @@ PyCSR_T(PyCSR *self, void *closure)
 
 
 static PyMethodDef PyCSR_methods[] = {
-    {"sort_indices", (PyCFunction)PyCSR_sort_indices, METH_NOARGS, "Sort colind within rows and move diagonal to last."},
     {"todense", (PyCFunction)PyCSR_todense, METH_NOARGS, "Convert to dense NumPy array."},
     {NULL, NULL, 0, NULL}
 };

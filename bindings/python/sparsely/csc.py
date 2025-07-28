@@ -47,6 +47,9 @@ class CSC:
     def __getitem__(self, key):
         return self._c_obj[key]
 
+    def sort_indices(self):
+        return self._c_obj.sort_indices()
+
     def tocsr(self):
         from .csr import CSR
         return CSR.from_c_obj(csc_to_csr(self._c_obj))

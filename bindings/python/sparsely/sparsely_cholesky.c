@@ -6,39 +6,39 @@
 #include "sparsely/cholesky_solve.h"
 #include "sparsely/dense.h"
 
-#include "sparsely_csr.h"
+#include "sparsely_csc.h"
 #include "sparsely_cholesky.h"
 
-// Extern type from CSR
-extern PyTypeObject PyCSRType;
+// Extern type from CSC
+extern PyTypeObject PyCSCType;
 
 // -------------------- cholesky --------------------
 
 static PyObject *
 cholesky_func(PyObject *self, PyObject *args)
 {
-    PyObject *csr_arg;
-    if (!PyArg_ParseTuple(args, "O", &csr_arg))
+    PyObject *csc_arg;
+    if (!PyArg_ParseTuple(args, "O", &csc_arg))
         return NULL;
 
-    if (!PyObject_TypeCheck(csr_arg, &PyCSRType)) {
-        PyErr_SetString(PyExc_TypeError, "Expected CSR object.");
+    if (!PyObject_TypeCheck(csc_arg, &PyCSCType)) {
+        PyErr_SetString(PyExc_TypeError, "Expected CSC object.");
         return NULL;
     }
 
-    csr_t *L = cholesky_factor(((PyCSR *)csr_arg)->csr);
+    csc_t *L = cholesky_factor(((PyCSC *)csc_arg)->csc);
     if (!L) {
         PyErr_SetString(PyExc_RuntimeError, "Factorization failed.");
         return NULL;
     }
 
-    PyCSR *result = PyObject_New(PyCSR, &PyCSRType);
+    PyCSC *result = PyObject_New(PyCSC, &PyCSCType);
     if (!result) {
-        csr_destroy(L);
+        csc_destroy(L);
         return NULL;
     }
 
-    result->csr = L;
+    result->csc = L;
     return (PyObject *)result;
 }
 
@@ -53,7 +53,7 @@ sparse_solve_cholesky(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "OO", &L_obj, &b_obj))
         return NULL;
 
-    if (!PyObject_TypeCheck(L_obj, &PyCSRType)) {
+    if (!PyObject_TypeCheck(L_obj, &PyCSCType)) {
         PyErr_SetString(PyExc_TypeError, "First argument must be CSR.");
         return NULL;
     }
@@ -68,7 +68,7 @@ sparse_solve_cholesky(PyObject *self, PyObject *args)
     }
 
     int n = (int)PyArray_DIM(b_array, 0);
-    if (n != ((PyCSR *)L_obj)->csr->nrows) {
+    if (n != ((PyCSC *)L_obj)->csc->nrows) {
         PyErr_SetString(PyExc_ValueError, "Dimension mismatch between matrix and RHS.");
         Py_DECREF(b_array);
         return NULL;
@@ -84,7 +84,7 @@ sparse_solve_cholesky(PyObject *self, PyObject *args)
     dense_t b_dense = { n, (double *)PyArray_DATA(b_array) };
     dense_t x_dense = { n, (double *)PyArray_DATA((PyArrayObject *)x_array) };
 
-    csr_solve_cholesky(((PyCSR *)L_obj)->csr, &b_dense, &x_dense);
+    csc_solve_cholesky(((PyCSC *)L_obj)->csc, &b_dense, &x_dense);
 
     Py_DECREF(b_array);
     return x_array;
@@ -93,7 +93,7 @@ sparse_solve_cholesky(PyObject *self, PyObject *args)
 // -------------------- registration --------------------
 
 static PyMethodDef cholesky_methods[] = {
-    {"cholesky", cholesky_func, METH_VARARGS, "Compute Cholesky factorization of a CSR matrix."},
+    {"cholesky", cholesky_func, METH_VARARGS, "Compute Cholesky factorization of a CSC matrix."},
     {"solve_cholesky", sparse_solve_cholesky, METH_VARARGS, "Solve LLᵗ x = b for x."},
     {NULL, NULL, 0, NULL}
 };
