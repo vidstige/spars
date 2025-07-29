@@ -27,6 +27,15 @@ setup(
                 "../../src/mul.c",
             ],
             include_dirs=["../../include", numpy.get_include()],
+            extra_compile_args=[
+                "-O3",
+                "-march=native",
+                "-ffast-math",
+                "-flto",
+                "-funroll-loops",
+                "-ftree-vectorize",
+            ],
+            extra_link_args=["-flto"],
         )
     ],
 )
