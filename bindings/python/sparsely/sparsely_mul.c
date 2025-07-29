@@ -82,7 +82,7 @@ py_csr_mul_csr(PyObject *self, PyObject *args)
     );
 
     if (!result) {
-        PyErr_SetString(PyExc_RuntimeError, "csr_mul_csr failed (Not implemented).");
+        PyErr_SetString(PyExc_RuntimeError, "csr_mul_csr failed (Out of memory).");
         return NULL;
     }
 
