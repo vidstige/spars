@@ -15,7 +15,7 @@ def test_cholesky_lsqr_against_numpy():
 
     ATA = A.T @ A
     ATb = A.T @ b
-    L = cholesky(ATA)
+    L = cholesky(ATA.tocsc())
     L.sort_indices()  # sort indices to ensure diagonal is last
     actual = solve_cholesky(L, ATb)
 
