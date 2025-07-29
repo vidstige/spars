@@ -1,11 +1,24 @@
 # Compiler and flags
-CC = gcc
+CC = clang
 CFLAGS = -Wall -Wextra -O2 -g -Iinclude
 
 # Directories
 SRC_DIR = src
-OBJ_DIR = obj
+INC_DIR = include
 LIB_DIR = lib
+
+# Build configuration: default to release
+BUILD ?= release
+
+ifeq ($(BUILD),debug)
+    CFLAGS = -Wall -Wextra -O0 -g -I$(INC_DIR)
+else ifeq ($(BUILD),release)
+    CFLAGS = -Wall -Wextra -O3 -mcpu=apple-m1 -ffast-math -funroll-loops -flto -I$(INC_DIR) \
+             -Rpass=loop-vectorize -Rpass-missed=loop-vectorize -Rpass-analysis=loop-vectorize
+else
+    $(error Unknown BUILD type: $(BUILD))
+endif
+OBJ_DIR = obj/$(BUILD)
 
 # Sources and objects
 SRCS = $(wildcard $(SRC_DIR)/*.c)
