@@ -327,3 +327,55 @@ csr_t* csc_to_csr(const csc_t* csc) {
     free(offset);
     return csr;
 }
+
+csc_t *csr_to_csc(const csr_t *A) {
+    int nrows = A->nrows;
+    int ncols = A->ncols;
+    int nnz = A->rowptr[nrows];
+
+    csc_t *B = malloc(sizeof(csc_t));
+    if (!B) return NULL;
+
+    B->nrows = nrows;
+    B->ncols = ncols;
+    B->nnz = nnz;
+    B->colptr = calloc(ncols + 1, sizeof(int));
+    B->rowind = malloc(nnz * sizeof(int));
+    B->values = malloc(nnz * sizeof(double));
+    if (!B->colptr || !B->rowind || !B->values) {
+        free(B->colptr); free(B->rowind); free(B->values); free(B);
+        return NULL;
+    }
+
+    // Step 1: Count number of entries in each column
+    for (int i = 0; i < nrows; ++i) {
+        for (int idx = A->rowptr[i]; idx < A->rowptr[i + 1]; ++idx) {
+            int col = A->colind[idx];
+            B->colptr[col + 1]++;
+        }
+    }
+
+    // Step 2: Cumulative sum to get colptr
+    for (int i = 0; i < ncols; ++i) {
+        B->colptr[i + 1] += B->colptr[i];
+    }
+
+    // Step 3: Fill rowind and values
+    int *next = calloc(ncols, sizeof(int));
+    if (!next) {
+        free(B->colptr); free(B->rowind); free(B->values); free(B);
+        return NULL;
+    }
+
+    for (int i = 0; i < nrows; ++i) {
+        for (int idx = A->rowptr[i]; idx < A->rowptr[i + 1]; ++idx) {
+            int col = A->colind[idx];
+            int dest = B->colptr[col] + next[col]++;
+            B->rowind[dest] = i;
+            B->values[dest] = A->values[idx];
+        }
+    }
+
+    free(next);
+    return B;
+}

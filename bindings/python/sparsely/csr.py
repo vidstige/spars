@@ -1,7 +1,7 @@
 from typing import List, Union
 import numpy as np
 
-from ._sparse_c import CSR as _RawCSR, csr_mul_dense, csr_mul_csr, csr_add_csr
+from ._sparse_c import CSR as _RawCSR, csr_mul_dense, csr_mul_csr, csr_add_csr, csr_to_csc
 
 
 class CSR:
@@ -50,3 +50,7 @@ class CSR:
 
     def __getitem__(self, key):
         return self._c_obj[key]
+    
+    def tocsc(self):
+        from .csc import CSC
+        return CSC.from_c_obj(csr_to_csc(self._c_obj))
