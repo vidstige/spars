@@ -7,6 +7,21 @@ SRC_DIR = src
 INC_DIR = include
 LIB_DIR = lib
 
+# Detect architecture
+UNAME_S := $(shell uname -s)
+CPU_BRAND := $(shell sysctl -n machdep.cpu.brand_string 2>/dev/null)
+
+# Choose CPU-specific flag
+ifeq ($(UNAME_S),Darwin)
+    ifneq (,$(findstring Apple M1,$(CPU_BRAND)))
+        CPUFLAG = -mcpu=apple-m1
+    else
+        CPUFLAG = -march=native
+    endif
+else
+    CPUFLAG = -march=native
+endif
+
 # Build configuration: default to release
 BUILD ?= release
 
