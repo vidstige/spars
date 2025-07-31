@@ -25,6 +25,7 @@ setup(
                 "../../src/dense.c",
                 "../../src/add.c",
                 "../../src/mul.c",
+                "../../src/blasphemy.c",
             ],
             include_dirs=["../../include", numpy.get_include()],
             extra_compile_args=[

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include "sparsely/dense.h"
+#include "sparsely/blasphemy.h"
 
 dense_t dense_empty(int n) {
     dense_t v;
@@ -38,6 +39,7 @@ dense_t dense_copy(int n, const double *data) {
     }
     return v;
 }
+
 void dense_copy_to(dense_t *dst, const dense_t *src) {
     assert(dst->n == src->n);
     for (int i = 0; i < dst->n; ++i)
@@ -77,6 +79,5 @@ void dense_scale(dense_t *v, double alpha) {
 
 void dense_add_scaled(dense_t *y, double alpha, const dense_t *x) {
     assert(y->n == x->n);
-    for (int i = 0; i < y->n; ++i)
-        y->values[i] += alpha * x->values[i];
+    blasphemy_daxpy(y->n, y->values, x->values, alpha);
 }
