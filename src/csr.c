@@ -1,13 +1,14 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include "sparsely/alloc.h"
 #include "sparsely/sort.h"
 #include "sparsely/csr.h"
 
 csr_t *csr_create(
     int nrows, int ncols, int nnz,
-    int *rowptr, int *colind,
-    double *values
+    const int *rowptr, const int *colind,
+    const double *values
 ) {
     if (!rowptr || !colind || !values) return NULL;
 
@@ -17,20 +18,31 @@ csr_t *csr_create(
     csr->nrows = nrows;
     csr->ncols = ncols;
     csr->nnz = nnz;
-    csr->rowptr = rowptr;
-    csr->colind = colind;
-    csr->values = values;
+
+    // Allocate and copy rowptr and colind using plain malloc (alignment doesn't help here)
+    csr->rowptr = malloc(sizeof(int) * (nrows + 1));
+    csr->colind = malloc(sizeof(int) * nnz);
+    csr->values = sparsely_alloc(32, sizeof(double) * nnz); // aligned allocation
+
+    if (!csr->rowptr || !csr->colind || !csr->values) {
+        csr_destroy(csr);
+        return NULL;
+    }
+
+    memcpy(csr->rowptr, rowptr, sizeof(int) * (nrows + 1));
+    memcpy(csr->colind, colind, sizeof(int) * nnz);
+    memcpy(csr->values, values, sizeof(double) * nnz);
 
     return csr;
 }
 
-void csr_destroy(csr_t *mat) {
-    if (!mat) return;
+void csr_destroy(csr_t *csr) {
+    if (!csr) return;
 
-    free(mat->values);
-    free(mat->colind);
-    free(mat->rowptr);
-    free(mat);
+    sparsely_free(csr->values);
+    free(csr->colind);
+    free(csr->rowptr);
+    free(csr);
 }
 
 // Compare A->colind[start + a] vs A->colind[start + b]

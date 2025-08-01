@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 
 typedef struct {
     int nrows;
@@ -11,10 +12,10 @@ typedef struct {
 
 csr_t *csr_create(
     int nrows, int ncols, int nnz,
-    int *rowptr, int *colind,
-    double *values
+    const int *rowptr, const int *colind,
+    const double *values
 );
-
-void csr_destroy(csr_t *mat);
+void csr_destroy(csr_t *csr);
+bool csr_ok(csr_t *csr);
 
 void csr_sort_indices(csr_t *A);
