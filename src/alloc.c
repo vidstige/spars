@@ -25,6 +25,6 @@ void *sparsely_realloc(const void *old_ptr, size_t old_size, size_t new_size, si
     return new_ptr;
 }
 
-void sparsely_free(const void *ptr) {
+void sparsely_free(void *ptr) {
     free(ptr);
 }
