@@ -25,28 +25,29 @@ static inline csc_t *cholesky(
     if (!colptr || !rowind || !values) return NULL;
 
     double *work = sparsely_alloc(SPARSELY_ALIGNMENT, n * sizeof(double));
-    memset(work, 0, n * sizeof(double));
+    int *marker = malloc(n * sizeof(int));
+    if (!work || !marker) return NULL;
 
-    int *pattern = malloc(n * sizeof(int));
-    if (!work || !pattern) return NULL;
+    memset(marker, 0, n * sizeof(int));
+    int gen = 1;
 
     int nz = 0;
-
     for (int j = 0; j < n; ++j) {
-        int pattern_len = 0;
+        gen++;
 
-        // Step 1: copy A[j:n, j] into work
+        // Fill work[] with column j of A
         for (int idx = a_colptr[j]; idx < a_colptr[j + 1]; ++idx) {
             int i = a_rowind[idx];
             if (i >= j) {
-                work[i] = a_values[idx];
-                pattern[pattern_len++] = i;
+                if (marker[i] != gen) {
+                    work[i] = a_values[idx];
+                    marker[i] = gen;
+                }
             }
         }
 
-        // Step 2: compute L[i,j] for i > j using previously computed columns
+        // Subtract L * L^T contributions
         for (int k = 0; k < j; ++k) {
-            // find L[j,k] if it exists (it's at colptr[k] to colptr[k+1])
             double Ljk = 0.0;
             for (int idx = colptr[k]; idx < colptr[k + 1]; ++idx) {
                 if (rowind[idx] == j) {
@@ -56,43 +57,41 @@ static inline csc_t *cholesky(
             }
             if (Ljk == 0.0) continue;
 
-            // subtract Ljk * L[i,k] for i >= j
             for (int idx = colptr[k]; idx < colptr[k + 1]; ++idx) {
                 int i = rowind[idx];
                 if (i >= j) {
+                    if (marker[i] != gen) {
+                        work[i] = 0.0;
+                        marker[i] = gen;
+                    }
                     work[i] -= Ljk * values[idx];
                 }
             }
         }
 
-        // Step 3: compute and validate diagonal
+        // Compute diagonal
         double diag = work[j];
         if (diag <= 0.0) {
             fprintf(stderr, "Matrix not positive definite at column %d\n", j);
-            free(colptr); free(rowind); free(values); free(work); free(pattern);
+            free(colptr); free(rowind); free(values); free(work); free(marker);
             return NULL;
         }
 
         double Ljj = sqrt(diag);
         colptr[j] = nz;
 
-        // Step 4: store column j
         for (int i = j; i < n; ++i) {
-            if (work[i] != 0.0) {
+            if (marker[i] == gen) {
                 rowind[nz] = i;
                 values[nz++] = (i == j) ? Ljj : work[i] / Ljj;
             }
         }
 
         colptr[j + 1] = nz;
-
-        // Step 5: clear work
-        for (int k = 0; k < pattern_len; ++k)
-            work[pattern[k]] = 0.0;
     }
 
     free(work);
-    free(pattern);
+    free(marker);
 
     csc_t *L = malloc(sizeof(csc_t));
     L->nrows = n;
