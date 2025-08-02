@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include "sparsely/alloc.h"
 #include "sparsely/dense.h"
 #include "sparsely/mul.h"
 
@@ -150,9 +151,15 @@ csr_t *csr_mul_csr(const csr_t *A, const csr_t *B) {
             int next_j = next[j];
 
             if (nnz >= alloc_nnz) {
-                alloc_nnz *= 2;
-                int *new_colind = realloc(colind, alloc_nnz * sizeof(int));
-                double *new_values = realloc(values, alloc_nnz * sizeof(double));
+                int new_alloc_nnz = alloc_nnz * 2;
+                int *new_colind = realloc(colind, new_alloc_nnz * sizeof(int));
+                double *new_values = sparsely_realloc(
+                    values,
+                    alloc_nnz * sizeof(double),
+                    new_alloc_nnz * sizeof(double),
+                    SPARSELY_ALIGNMENT
+                );
+                alloc_nnz = new_alloc_nnz;
                 if (!new_colind || !new_values) {
                     free(new_colind);
                     free(new_values);
@@ -177,7 +184,12 @@ csr_t *csr_mul_csr(const csr_t *A, const csr_t *B) {
     free(next);
 
     colind = realloc(colind, nnz * sizeof(int));
-    values = realloc(values, nnz * sizeof(double));
+    values = sparsely_realloc(
+        values,
+        alloc_nnz * sizeof(double),
+        nnz * sizeof(double),
+        SPARSELY_ALIGNMENT
+    );
     return csr_create(m, n, nnz, rowptr, colind, values);
 
 fail2:
