@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-
+#include "sparsely/alloc.h"
 #include "sparsely/csc.h"
 
 csc_t *cholesky_factor(const csc_t *A) {
@@ -14,10 +14,12 @@ csc_t *cholesky_factor(const csc_t *A) {
 
     int *colptr = calloc(n + 1, sizeof(int));
     int *rowind = malloc(A->nnz * sizeof(int));  // overallocate
-    double *values = malloc(A->nnz * sizeof(double));
+    double *values = sparsely_alloc(SPARSELY_ALIGNMENT, A->nnz * sizeof(double));
     if (!colptr || !rowind || !values) return NULL;
 
-    double *work = calloc(n, sizeof(double));
+    double *work = sparsely_alloc(SPARSELY_ALIGNMENT, n * sizeof(double));
+    memset(work, 0, n * sizeof(double));
+
     int *pattern = malloc(n * sizeof(int));
     if (!work || !pattern) return NULL;
 
@@ -92,5 +94,10 @@ csc_t *cholesky_factor(const csc_t *A) {
     L->colptr = colptr;
     L->rowind = realloc(rowind, nz * sizeof(int));
     L->values = realloc(values, nz * sizeof(double));
+    L->values = sparsely_realloc(
+        L->values, A->nnz * sizeof(double),
+        nz * sizeof(double),
+        SPARSELY_ALIGNMENT
+    );
     return L;
 }
