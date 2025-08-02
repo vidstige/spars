@@ -5,6 +5,26 @@
 #include "sparsely/alloc.h"
 #include "sparsely/csc.h"
 
+// Fast binary search
+static inline double find_Ljk(
+    int k, int j, 
+    const int *restrict colptr,
+    const int *restrict rowind,
+    const double *restrict values)
+{
+    int lo = colptr[k], hi = colptr[k + 1] - 1;
+    while (lo <= hi) {
+        int mid = (lo + hi) >> 1;
+        if (rowind[mid] < j)
+            lo = mid + 1;
+        else if (rowind[mid] > j)
+            hi = mid - 1;
+        else
+            return values[mid];
+    }
+    return 0.0;
+}
+
 static inline csc_t *cholesky(
     int nrows, int ncols, int nnz,
     const int *restrict a_colptr,
@@ -48,13 +68,7 @@ static inline csc_t *cholesky(
 
         // Subtract L * L^T contributions
         for (int k = 0; k < j; ++k) {
-            double Ljk = 0.0;
-            for (int idx = colptr[k]; idx < colptr[k + 1]; ++idx) {
-                if (rowind[idx] == j) {
-                    Ljk = values[idx];
-                    break;
-                }
-            }
+            double Ljk = find_Ljk(k, j, colptr, rowind, values);
             if (Ljk == 0.0) continue;
 
             for (int idx = colptr[k]; idx < colptr[k + 1]; ++idx) {
