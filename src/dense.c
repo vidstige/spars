@@ -2,13 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "sparsely/alloc.h"
 #include "sparsely/dense.h"
 #include "sparsely/blasphemy.h"
 
 dense_t dense_empty(int n) {
     dense_t v;
     v.n = n;
-    v.values = malloc(n * sizeof(double));
+    v.values = SPARSELY_ALLOC(double, n);
     if (!v.values) {
         v.n = -1; // indicate failure
     }
@@ -18,7 +19,7 @@ dense_t dense_empty(int n) {
 dense_t dense_zeros(int n) {
     dense_t v;
     v.n = n;
-    v.values = malloc(n * sizeof(double));
+    v.values = SPARSELY_ALLOC(double, n);
     if (!v.values) {
         v.n = -1; // indicate failure
     } else {
@@ -31,7 +32,7 @@ dense_t dense_copy(int n, const double *data) {
     assert(data != NULL); // data must not be NULL
     dense_t v;
     v.n = n;
-    v.values = malloc(n * sizeof(double));
+    v.values = SPARSELY_ALLOC(double, n);
     if (!v.values) {
         v.n = -1; // indicate failure
     } else {
@@ -49,14 +50,14 @@ void dense_copy_to(dense_t *dst, const dense_t *src) {
 dense_t dense_clone(const dense_t *src) {
     dense_t copy;
     copy.n = src->n;
-    copy.values = malloc(sizeof(double) * src->n);
+    copy.values = SPARSELY_ALLOC(double, src->n);
     for (int i = 0; i < src->n; ++i)
         copy.values[i] = src->values[i];
     return copy;
 }
 
 void dense_destroy(const dense_t *v) {
-    if (v) free(v->values);
+    sparsely_free(v->values);
 }
 
 // operations
