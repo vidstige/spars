@@ -1,4 +1,7 @@
+#include "sparsely/alloc.h"
 void blasphemy_daxpy(int n, double *restrict y, const double *restrict x, double alpha) {
+    double *y_aligned = SPARSELY_ASSUME_ALIGNED(y);
+    double *x_aligned = SPARSELY_ASSUME_ALIGNED(x);
     for (int i = 0; i < n; ++i)
-        y[i] += alpha * x[i];
+        y_aligned[i] += alpha * x_aligned[i];
 }
