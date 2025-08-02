@@ -190,7 +190,14 @@ csr_t *csr_mul_csr(const csr_t *A, const csr_t *B) {
         nnz * sizeof(double),
         SPARSELY_ALIGNMENT
     );
-    return csr_create(m, n, nnz, rowptr, colind, values);
+    csr_t *csr = malloc(sizeof(csr_t));
+    csr->nrows = m;
+    csr->ncols = n;
+    csr->nnz = nnz;
+    csr->rowptr = rowptr;
+    csr->colind = colind;
+    csr->values = values;
+    return csr;
 
 fail2:
     free(accum);
@@ -249,7 +256,15 @@ csr_t *csc_transpose_to_csr(const csc_t *A) {
     }
 
     free(row_counts);
-    return csr_create(n, m, nnz, rowptr, colind, values);
+
+    csr_t *csr = malloc(sizeof(csr_t));
+    csr->nrows = n;
+    csr->ncols = m;
+    csr->nnz = nnz;
+    csr->rowptr = rowptr;
+    csr->colind = colind;
+    csr->values = values;
+    return csr;
 }
 
 csr_t *csc_mul_csr(const csc_t *A, const csr_t *B) {
