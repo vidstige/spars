@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "sparsely/alloc.h"
 #include "sparsely/csc.h"
 #include "sparsely/sort.h"
 
@@ -19,9 +20,20 @@ csc_t *csc_create(int nrows, int ncols, int nnz,
     csc->nrows = nrows;
     csc->ncols = ncols;
     csc->nnz = nnz;
-    csc->colptr = colptr;
-    csc->rowind = rowind;
-    csc->values = values;
+
+    // Allocate and copy rowptr and colind using plain malloc (alignment doesn't help here)
+    csc->colptr = malloc(sizeof(int) * (ncols + 1));
+    csc->rowind = malloc(sizeof(int) * nnz);
+    csc->values = sparsely_alloc(32, sizeof(double) * nnz); // aligned allocation
+    
+    if (!csc->colptr || !csc->rowind || !csc->values) {
+        csc_destroy(csc);
+        return NULL;
+    }
+
+    memcpy(csc->colptr, colptr, sizeof(int) * (ncols + 1));
+    memcpy(csc->rowind, rowind, sizeof(int) * nnz);
+    memcpy(csc->values, values, sizeof(double) * nnz);
 
     return csc;
 }
@@ -31,7 +43,7 @@ void csc_destroy(csc_t *csc) {
 
     free(csc->colptr);
     free(csc->rowind);
-    free(csc->values);
+    sparsely_free(csc->values);
     free(csc);
 }
 

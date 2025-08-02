@@ -11,22 +11,6 @@
 // Extern type from CSR
 extern PyTypeObject PyCSRType;
 
-// helper functions
-static int *copy_int_array(PyArrayObject *arr, int count) {
-    int *out = (int *)malloc(count * sizeof(int));
-    if (!out) return NULL;
-    memcpy(out, PyArray_DATA(arr), count * sizeof(int));
-    return out;
-}
-
-static double *copy_double_array(PyArrayObject *arr, int count) {
-    double *out = (double *)malloc(count * sizeof(double));
-    if (!out) return NULL;
-    memcpy(out, PyArray_DATA(arr), count * sizeof(double));
-    return out;
-}
-
-
 // ----- INIT -----
 static int PyCSC_init(PyCSC *self, PyObject *args, PyObject *kwds) {
     int nrows, ncols;
@@ -67,30 +51,12 @@ static int PyCSC_init(PyCSC *self, PyObject *args, PyObject *kwds) {
         goto fail;
     }
 
-    int *colptr_copy = copy_int_array(colptr_array, ncols + 1);
-    int *rowind_copy = copy_int_array(rowind_array, nnz);
-    double *values_copy = copy_double_array(values_array, nnz);
-
-    if (!colptr_copy || !rowind_copy || !values_copy) {
-        free(colptr_copy);
-        free(rowind_copy);
-        free(values_copy);
-        PyErr_SetString(PyExc_RuntimeError, "Memory allocation failed in copy.");
-        goto fail;
-    }
-
     self->csc = csc_create(
         nrows, ncols, nnz,
-        colptr_copy, rowind_copy, values_copy
+        PyArray_DATA(colptr_array),
+        PyArray_DATA(rowind_array),
+        PyArray_DATA(values_array)
     );
-
-    if (!self->csc) {
-        free(colptr_copy);
-        free(rowind_copy);
-        free(values_copy);
-        PyErr_SetString(PyExc_RuntimeError, "Failed to create CSC matrix.");
-        goto fail;
-    }
 
     if (!self->csc) {
         PyErr_SetString(PyExc_RuntimeError, "Failed to create CSC matrix.");
