@@ -8,10 +8,8 @@ class CSC:
         self._c_obj = _RawCSC(*args, **kwargs)
    
     @classmethod
-    def from_dense(cls, array_like: Union[np.ndarray, List[List[float]]]) -> 'CSC':
-        from .lil import LIL
-        lil = LIL.from_dense(array_like)
-        return lil.tocsc()
+    def from_dense(cls, array_like: np.ndarray) -> 'CSC':
+        return CSC.from_c_obj(_RawCSC.fromdense(array_like))
 
     @classmethod
     def from_c_obj(cls, c_obj):

@@ -4,6 +4,7 @@
 #include "sparsely_csc.h"
 #include "sparsely_csr.h"
 
+#include "sparsely/alloc.h"
 #include "sparsely/csr.h"
 #include "sparsely/csc.h"
 #include "sparsely/mul.h"
@@ -74,6 +75,105 @@ fail:
     Py_XDECREF(rowind_array);
     Py_XDECREF(values_array);
     return -1;
+}
+
+static PyObject *
+PyCSC_fromdense(PyTypeObject *type, PyObject *args)
+{
+    PyObject *input;
+    if (!PyArg_ParseTuple(args, "O", &input)) {
+        return NULL;
+    }
+
+    PyArrayObject *array = (PyArrayObject *)PyArray_FROM_OTF(input, NPY_FLOAT64, NPY_ARRAY_IN_ARRAY);
+    if (!array) return NULL;
+
+    if (PyArray_NDIM(array) != 2) {
+        PyErr_SetString(PyExc_ValueError, "Input must be a 2D array");
+        Py_DECREF(array);
+        return NULL;
+    }
+
+    int nrows = (int)PyArray_DIM(array, 0);
+    int ncols = (int)PyArray_DIM(array, 1);
+    double *data = (double *)PyArray_DATA(array);
+
+    // Count nnz per column
+    int *col_counts = calloc(ncols, sizeof(int));
+    if (!col_counts) goto fail;
+
+    int nnz = 0;
+    for (int j = 0; j < ncols; ++j) {
+        for (int i = 0; i < nrows; ++i) {
+            double val = data[i * ncols + j];
+            if (val != 0.0) {
+                col_counts[j]++;
+                nnz++;
+            }
+        }
+    }
+
+    // Allocate CSC arrays
+    int *colptr = malloc((ncols + 1) * sizeof(int));
+    int *rowind = malloc(nnz * sizeof(int));
+    double *values = sparsely_alloc(SPARSELY_ALIGNMENT, nnz * sizeof(double));
+    if (!colptr || !rowind || !values) goto fail;
+
+    // Fill colptr
+    colptr[0] = 0;
+    for (int j = 0; j < ncols; ++j)
+        colptr[j + 1] = colptr[j] + col_counts[j];
+
+    // Fill rowind and values
+    int *offset = calloc(ncols, sizeof(int));
+    if (!offset) goto fail;
+
+    for (int j = 0; j < ncols; ++j) {
+        int base = colptr[j];
+        for (int i = 0; i < nrows; ++i) {
+            double val = data[i * ncols + j];
+            if (val != 0.0) {
+                int idx = base + offset[j];
+                rowind[idx] = i;
+                values[idx] = val;
+                offset[j]++;
+            }
+        }
+    }
+
+    // Construct CSC object
+    csc_t *csc = malloc(sizeof(csc_t));
+    if (!csc) goto fail;
+
+    csc->nrows = nrows;
+    csc->ncols = ncols;
+    csc->nnz = nnz;
+    csc->colptr = colptr;
+    csc->rowind = rowind;
+    csc->values = values;
+
+    PyCSC *self = (PyCSC *)type->tp_alloc(type, 0);
+    if (!self) {
+        free(csc); // Assuming freeing here is fine — no deep free needed as fallback
+        return NULL;
+    }
+
+    self->csc = csc;
+
+    free(offset);
+    free(col_counts);
+    Py_DECREF(array);
+    return (PyObject *)self;
+
+fail:
+    PyErr_SetString(PyExc_MemoryError, "Failed to allocate CSC matrix from dense");
+    Py_XDECREF(array);
+    free(col_counts);
+    free(offset);
+    free(colptr);
+    free(rowind);
+    sparsely_free(values);
+    return NULL;
 }
 
 // ----- DEALLOC -----
@@ -181,6 +281,7 @@ PyCSC_subscript(PyCSC *self, PyObject *key)
 }
 
 static PyMethodDef PyCSC_methods[] = {
+    {"fromdense", (PyCFunction)PyCSC_fromdense, METH_VARARGS | METH_CLASS, "Create CSC matrix from dense"},
     {"sort_indices", (PyCFunction)PyCSC_sort_indices, METH_NOARGS, "Sort colind within rows and move diagonal to last."},
     {"todense", (PyCFunction)PyCSC_todense, METH_NOARGS, "Convert to dense NumPy array."},
     {NULL, NULL, 0, NULL}

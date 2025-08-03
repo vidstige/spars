@@ -23,6 +23,9 @@ class CSR:
 
 
 class CSC:
+    @classmethod
+    def fromdense(cls, array_like: np.ndarray) -> 'CSC': ...
+
     def __getitem__(self, key: tuple[int, int]) -> float: ...
 
     @property
