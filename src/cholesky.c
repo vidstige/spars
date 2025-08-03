@@ -5,6 +5,21 @@
 #include "sparsely/alloc.h"
 #include "sparsely/csc.h"
 
+typedef struct {
+    int i;
+    double val;
+} entry_t;
+
+static inline int find_or_insert(entry_t *entries, int *count, int i) {
+    for (int k = 0; k < *count; ++k) {
+        if (entries[k].i == i)
+            return k;
+    }
+    entries[*count].i = i;
+    entries[*count].val = 0.0;
+    return (*count)++;
+}
+
 static inline csc_t *cholesky(
     int nrows, int ncols, int nnz,
     const int *restrict a_colptr,
@@ -26,88 +41,80 @@ static inline csc_t *cholesky(
     );
     if (!colptr || !rowind || !values) return NULL;
 
-    double *work = SPARSELY_ASSUME_ALIGNED(
-        sparsely_alloc(SPARSELY_ALIGNMENT, n * sizeof(double))
-    );
-    int *marker = malloc(n * sizeof(int));
-    if (!work || !marker) return NULL;
-
-    memset(marker, 0, n * sizeof(int));
-    int gen = 1;
+    entry_t *entries = malloc(n * sizeof(entry_t));
+    if (!entries) return NULL;
 
     int nz = 0;
     for (int j = 0; j < n; ++j) {
-        gen++;
+        int count = 0;
 
-        // Fill work[] with column j of A
+        // Fill entries with column j of A, i >= j
         for (int idx = a_colptr[j]; idx < a_colptr[j + 1]; ++idx) {
             int i = a_rowind[idx];
             if (i >= j) {
-                if (marker[i] != gen) {
-                    work[i] = a_values[idx];
-                    marker[i] = gen;
-                }
+                entries[count].i = i;
+                entries[count].val = a_values[idx];
+                count++;
             }
         }
 
-        // Subtract L * L^T contributions
+        // Subtract previous column contributions
         for (int k = 0; k < j; ++k) {
             double Ljk = 0.0;
-            int idx0 = colptr[k];
-            int idx1 = colptr[k + 1];
-
-            // Find Ljk and do update in a single pass
-            for (int idx = idx0; idx < idx1; ++idx) {
-                int i = rowind[idx];
-                double Lik = values[idx];
-
-                if (i == j) {
-                    Ljk = Lik;
-                    break; // Since i is sorted, i == j will appear before i > j
-                } else if (i > j) {
-                    break; // No match will be found beyond this
+            for (int idx = colptr[k]; idx < colptr[k + 1]; ++idx) {
+                if (rowind[idx] == j) {
+                    Ljk = values[idx];
+                    break;
+                } else if (rowind[idx] > j) {
+                    break;
                 }
             }
 
             if (Ljk == 0.0)
                 continue;
 
-            // Now apply the update
-            for (int idx = idx0; idx < idx1; ++idx) {
+            // Apply update: work[i] -= Ljk * Lik for i >= j
+            for (int idx = colptr[k]; idx < colptr[k + 1]; ++idx) {
                 int i = rowind[idx];
                 if (i >= j) {
-                    if (marker[i] != gen) {
-                        work[i] = 0.0;
-                        marker[i] = gen;
-                    }
-                    work[i] -= Ljk * values[idx];
+                    double Lik = values[idx];
+                    int k_idx = find_or_insert(entries, &count, i);
+                    entries[k_idx].val -= Ljk * Lik;
                 }
             }
         }
 
         // Compute diagonal
-        double diag = work[j];
-        if (diag <= 0.0) {
+        double diag = 0.0;
+        int found_diag = 0;
+        for (int k = 0; k < count; ++k) {
+            if (entries[k].i == j) {
+                diag = entries[k].val;
+                found_diag = 1;
+                break;
+            }
+        }
+
+        if (!found_diag || diag <= 0.0) {
             fprintf(stderr, "Matrix not positive definite at column %d\n", j);
-            free(colptr); free(rowind); free(values); free(work); free(marker);
+            free(colptr); free(rowind); free(values); free(entries);
             return NULL;
         }
 
         double Ljj = sqrt(diag);
         colptr[j] = nz;
 
-        for (int i = j; i < n; ++i) {
-            if (marker[i] == gen) {
-                rowind[nz] = i;
-                values[nz++] = (i == j) ? Ljj : work[i] / Ljj;
-            }
+        for (int k = 0; k < count; ++k) {
+            int i = entries[k].i;
+            double val = (i == j) ? Ljj : entries[k].val / Ljj;
+            rowind[nz] = i;
+            values[nz++] = val;
         }
 
         colptr[j + 1] = nz;
     }
 
-    free(work);
-    free(marker);
+    free(entries);
 
     csc_t *L = malloc(sizeof(csc_t));
     L->nrows = n;
