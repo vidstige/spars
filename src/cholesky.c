@@ -5,26 +5,6 @@
 #include "sparsely/alloc.h"
 #include "sparsely/csc.h"
 
-// Fast binary search
-static inline double find_Ljk(
-    int k, int j, 
-    const int *restrict colptr,
-    const int *restrict rowind,
-    const double *restrict values)
-{
-    int lo = colptr[k], hi = colptr[k + 1] - 1;
-    while (lo <= hi) {
-        int mid = (lo + hi) >> 1;
-        if (rowind[mid] < j)
-            lo = mid + 1;
-        else if (rowind[mid] > j)
-            hi = mid - 1;
-        else
-            return values[mid];
-    }
-    return 0.0;
-}
-
 static inline csc_t *cholesky(
     int nrows, int ncols, int nnz,
     const int *restrict a_colptr,
@@ -68,10 +48,28 @@ static inline csc_t *cholesky(
 
         // Subtract L * L^T contributions
         for (int k = 0; k < j; ++k) {
-            double Ljk = find_Ljk(k, j, colptr, rowind, values);
-            if (Ljk == 0.0) continue;
+            double Ljk = 0.0;
+            int idx0 = colptr[k];
+            int idx1 = colptr[k + 1];
 
-            for (int idx = colptr[k]; idx < colptr[k + 1]; ++idx) {
+            // Find Ljk and do update in a single pass
+            for (int idx = idx0; idx < idx1; ++idx) {
+                int i = rowind[idx];
+                double Lik = values[idx];
+
+                if (i == j) {
+                    Ljk = Lik;
+                    break; // Since i is sorted, i == j will appear before i > j
+                } else if (i > j) {
+                    break; // No match will be found beyond this
+                }
+            }
+
+            if (Ljk == 0.0)
+                continue;
+
+            // Now apply the update
+            for (int idx = idx0; idx < idx1; ++idx) {
                 int i = rowind[idx];
                 if (i >= j) {
                     if (marker[i] != gen) {
