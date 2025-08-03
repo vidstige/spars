@@ -19,9 +19,9 @@ Building C only: `make`
 To build & test the python bindings
 * Use a virtual environment: `python3.11 -m venv venv`
 * Activate: `source venv/bin/activate`
-* Install dependencies: `pip install -r requirements.txt`
 * Install bindings: `pip install -e bindings/python`
 * Run tests: `pytest bindings/python`
+* Run benchmarks: `docker build --file benchmark.dockerfile . --tag sparsely-benchmarks && time docker run --rm -it sparsely-benchmarks`
 
 ## Alternatives
 * [pysparse](https://github.com/PythonOptimizers/pysparse) - Created in the early 2000s and the last update was back in 2015. Not possible to install on modern python anymore
