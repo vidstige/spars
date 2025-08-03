@@ -10,16 +10,6 @@ typedef struct {
     double val;
 } entry_t;
 
-static inline int find_or_insert(entry_t *entries, int *count, int i) {
-    for (int k = 0; k < *count; ++k) {
-        if (entries[k].i == i)
-            return k;
-    }
-    entries[*count].i = i;
-    entries[*count].val = 0.0;
-    return (*count)++;
-}
-
 static inline csc_t *cholesky(
     int nrows, int ncols, int nnz,
     const int *restrict a_colptr,
@@ -42,19 +32,20 @@ static inline csc_t *cholesky(
     if (!colptr || !rowind || !values) return NULL;
 
     entry_t *entries = malloc(n * sizeof(entry_t));
-    if (!entries) return NULL;
+    int *imap = malloc(n * sizeof(int));  // -1 means unused
+    if (!entries || !imap) return NULL;
 
     int nz = 0;
     for (int j = 0; j < n; ++j) {
         int count = 0;
+        for (int i = 0; i < n; ++i) imap[i] = -1;
 
-        // Fill entries with column j of A, i >= j
+        // Fill entries with column j of A, where i >= j
         for (int idx = a_colptr[j]; idx < a_colptr[j + 1]; ++idx) {
             int i = a_rowind[idx];
             if (i >= j) {
-                entries[count].i = i;
-                entries[count].val = a_values[idx];
-                count++;
+                imap[i] = count;
+                entries[count++] = (entry_t){ i, a_values[idx] };
             }
         }
 
@@ -70,21 +61,25 @@ static inline csc_t *cholesky(
                 }
             }
 
-            if (Ljk == 0.0)
-                continue;
+            if (Ljk == 0.0) continue;
 
-            // Apply update: work[i] -= Ljk * Lik for i >= j
             for (int idx = colptr[k]; idx < colptr[k + 1]; ++idx) {
                 int i = rowind[idx];
                 if (i >= j) {
                     double Lik = values[idx];
-                    int k_idx = find_or_insert(entries, &count, i);
-                    entries[k_idx].val -= Ljk * Lik;
+
+                    int entry_idx = imap[i];
+                    if (entry_idx == -1) {
+                        imap[i] = count;
+                        entries[count++] = (entry_t){ i, 0.0 };
+                        entry_idx = imap[i];
+                    }
+                    entries[entry_idx].val -= Ljk * Lik;
                 }
             }
         }
 
-        // Compute diagonal
+        // Find and validate diagonal
         double diag = 0.0;
         int found_diag = 0;
         for (int k = 0; k < count; ++k) {
@@ -97,7 +92,7 @@ static inline csc_t *cholesky(
 
         if (!found_diag || diag <= 0.0) {
             fprintf(stderr, "Matrix not positive definite at column %d\n", j);
-            free(colptr); free(rowind); free(values); free(entries);
+            free(colptr); free(rowind); free(values); free(entries); free(imap);
             return NULL;
         }
 
@@ -115,6 +110,7 @@ static inline csc_t *cholesky(
     }
 
     free(entries);
+    free(imap);
 
     csc_t *L = malloc(sizeof(csc_t));
     L->nrows = n;
