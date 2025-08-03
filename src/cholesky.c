@@ -27,7 +27,9 @@ static inline csc_t *cholesky(
     if (!colptr || !rowind || !values) return NULL;
 
     int *work_rows = malloc(n * sizeof(int));
-    double *work_values = malloc(n * sizeof(double));
+    double *work_values =  SPARSELY_ASSUME_ALIGNED(
+        sparsely_alloc(SPARSELY_ALIGNMENT, n * sizeof(double))
+    );
     int *imap = malloc(n * sizeof(int));  // -1 means unused
     if (!work_rows || !work_values || !imap) return NULL;
 
@@ -93,7 +95,8 @@ static inline csc_t *cholesky(
         if (!found_diag || diag <= 0.0) {
             fprintf(stderr, "Matrix not positive definite at column %d\n", j);
             free(colptr); free(rowind); free(values);
-            free(work_rows); free(work_values); free(imap);
+            free(work_rows); free(imap);
+            sparsely_free(work_values);
             return NULL;
         }
 
@@ -111,7 +114,7 @@ static inline csc_t *cholesky(
     }
 
     free(work_rows);
-    free(work_values);
+    sparsely_free(work_values);
     free(imap);
 
     csc_t *L = malloc(sizeof(csc_t));
