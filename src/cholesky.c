@@ -21,10 +21,14 @@ static inline csc_t *cholesky(
 
     int *colptr = calloc(n + 1, sizeof(int));
     int *rowind = malloc(nnz * sizeof(int));  // overallocate
-    double *values = sparsely_alloc(SPARSELY_ALIGNMENT, nnz * sizeof(double));
+    double *values = SPARSELY_ASSUME_ALIGNED(
+        sparsely_alloc(SPARSELY_ALIGNMENT, nnz * sizeof(double))
+    );
     if (!colptr || !rowind || !values) return NULL;
 
-    double *work = sparsely_alloc(SPARSELY_ALIGNMENT, n * sizeof(double));
+    double *work = SPARSELY_ASSUME_ALIGNED(
+        sparsely_alloc(SPARSELY_ALIGNMENT, n * sizeof(double))
+    );
     int *marker = malloc(n * sizeof(int));
     if (!work || !marker) return NULL;
 
