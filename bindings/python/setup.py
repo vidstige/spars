@@ -15,6 +15,21 @@ def detect_machine_flag():
     return "-march=native"
 
 
+extra_compile_args = [
+    "-O3",
+    detect_machine_flag(),
+    "-ffast-math",
+    "-flto",
+    "-funroll-loops",
+    "-ftree-vectorize",
+]
+
+
+extra_link_args = [
+    "-flto",
+]
+
+
 setup(
     name="sparsely",
     packages=find_packages(),
@@ -41,15 +56,8 @@ setup(
                 "../../src/blasphemy.c",
             ],
             include_dirs=["../../include", numpy.get_include()],
-            extra_compile_args=[
-                "-O3",
-                detect_machine_flag(),
-                "-ffast-math",
-                "-flto",
-                "-funroll-loops",
-                "-ftree-vectorize",
-            ],
-            extra_link_args=["-flto"],
+            extra_compile_args=extra_compile_args,
+            extra_link_args=extra_link_args,
         )
     ],
 )
