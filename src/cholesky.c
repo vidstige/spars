@@ -5,11 +5,6 @@
 #include "sparsely/alloc.h"
 #include "sparsely/csc.h"
 
-typedef struct {
-    int i;
-    double val;
-} entry_t;
-
 static inline csc_t *cholesky(
     int nrows, int ncols, int nnz,
     const int *restrict a_colptr,
@@ -31,21 +26,24 @@ static inline csc_t *cholesky(
     );
     if (!colptr || !rowind || !values) return NULL;
 
-    entry_t *entries = malloc(n * sizeof(entry_t));
+    int *work_rows = malloc(n * sizeof(int));
+    double *work_values = malloc(n * sizeof(double));
     int *imap = malloc(n * sizeof(int));  // -1 means unused
-    if (!entries || !imap) return NULL;
+    if (!work_rows || !work_values || !imap) return NULL;
 
     int nz = 0;
     for (int j = 0; j < n; ++j) {
         int count = 0;
         for (int i = 0; i < n; ++i) imap[i] = -1;
 
-        // Fill entries with column j of A, where i >= j
+        // Fill work arrays with column j of A, where i >= j
         for (int idx = a_colptr[j]; idx < a_colptr[j + 1]; ++idx) {
             int i = a_rowind[idx];
             if (i >= j) {
                 imap[i] = count;
-                entries[count++] = (entry_t){ i, a_values[idx] };
+                work_rows[count] = i;
+                work_values[count] = a_values[idx];
+                count++;
             }
         }
 
@@ -71,10 +69,12 @@ static inline csc_t *cholesky(
                     int entry_idx = imap[i];
                     if (entry_idx == -1) {
                         imap[i] = count;
-                        entries[count++] = (entry_t){ i, 0.0 };
-                        entry_idx = imap[i];
+                        work_rows[count] = i;
+                        work_values[count] = 0.0;
+                        entry_idx = count;
+                        count++;
                     }
-                    entries[entry_idx].val -= Ljk * Lik;
+                    work_values[entry_idx] -= Ljk * Lik;
                 }
             }
         }
@@ -83,8 +83,8 @@ static inline csc_t *cholesky(
         double diag = 0.0;
         int found_diag = 0;
         for (int k = 0; k < count; ++k) {
-            if (entries[k].i == j) {
-                diag = entries[k].val;
+            if (work_rows[k] == j) {
+                diag = work_values[k];
                 found_diag = 1;
                 break;
             }
@@ -92,7 +92,8 @@ static inline csc_t *cholesky(
 
         if (!found_diag || diag <= 0.0) {
             fprintf(stderr, "Matrix not positive definite at column %d\n", j);
-            free(colptr); free(rowind); free(values); free(entries); free(imap);
+            free(colptr); free(rowind); free(values);
+            free(work_rows); free(work_values); free(imap);
             return NULL;
         }
 
@@ -100,8 +101,8 @@ static inline csc_t *cholesky(
         colptr[j] = nz;
 
         for (int k = 0; k < count; ++k) {
-            int i = entries[k].i;
-            double val = (i == j) ? Ljj : entries[k].val / Ljj;
+            int i = work_rows[k];
+            double val = (i == j) ? Ljj : work_values[k] / Ljj;
             rowind[nz] = i;
             values[nz++] = val;
         }
@@ -109,7 +110,8 @@ static inline csc_t *cholesky(
         colptr[j + 1] = nz;
     }
 
-    free(entries);
+    free(work_rows);
+    free(work_values);
     free(imap);
 
     csc_t *L = malloc(sizeof(csc_t));
