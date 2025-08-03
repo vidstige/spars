@@ -1,7 +1,19 @@
+# Warning: this file is still needed for the C extension to compile correctly.
+import platform
 from setuptools import setup, Extension, find_packages
+
 import numpy
 
-# Warning: this file is still needed for the C extension to compile correctly.
+
+# Figure out suitable compiler flags for the current platform.
+def detect_machine_flag():
+    machine = platform.machine().lower()
+    processor = platform.processor().lower()
+    if platform.system() == "Darwin":
+        if "arm" in machine or "apple" in processor or "m1" in processor:
+            return "-mcpu=apple-m1"
+    return "-march=native"
+
 
 setup(
     name="sparsely",
@@ -31,8 +43,7 @@ setup(
             include_dirs=["../../include", numpy.get_include()],
             extra_compile_args=[
                 "-O3",
-                #"-march=native",
-                "-mcpu=apple-m1",
+                detect_machine_flag(),
                 "-ffast-math",
                 "-flto",
                 "-funroll-loops",
