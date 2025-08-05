@@ -23,8 +23,8 @@ jobs:
       - name: Build sdist
         run: python -m build --sdist bindings/python
 
-      #- name: Publish to PyPI
-      #  uses: pypa/gh-action-pypi-publish@v1
-      #  with:
-      #    password: ${{ secrets.PYPI_API_TOKEN }}
-
+      - name: Upload to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.12.4
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          packages-dir: bindings/python/dist
