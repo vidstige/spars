@@ -1,3 +1,4 @@
+#define _GNU_SOURCE // For qsort_r
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
