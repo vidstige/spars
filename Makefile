@@ -28,8 +28,9 @@ BUILD ?= release
 ifeq ($(BUILD),debug)
     CFLAGS = -Wall -Wextra -O0 -g -I$(INC_DIR)
 else ifeq ($(BUILD),release)
-    CFLAGS = -Wall -Wextra -O3 -mcpu=apple-m1 -ffast-math -fno-math-errno -funroll-loops -flto -I$(INC_DIR) \
-             -Rpass=loop-vectorize -Rpass-missed=loop-vectorize -Rpass-analysis=loop-vectorize
+    CFLAGS = -Wall -Wextra -O3 $(CPUFLAG) -ffast-math -fno-math-errno -funroll-loops -flto -I$(INC_DIR)
+    # for analysing vectorizations on clang
+    # -Rpass=loop-vectorize -Rpass-missed=loop-vectorize -Rpass-analysis=loop-vectorize
 else
     $(error Unknown BUILD type: $(BUILD))
 endif
