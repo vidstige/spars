@@ -19,18 +19,18 @@ static inline csc_t *cholesky(
         return NULL;
     }
 
-    int *colptr = calloc(n + 1, sizeof(int));
-    int *rowind = malloc(nnz * sizeof(int));  // overallocate
-    double *values = SPARSELY_ASSUME_ALIGNED(
+    int *restrict colptr = calloc(n + 1, sizeof(int));
+    int *restrict rowind = malloc(nnz * sizeof(int));  // overallocate
+    double *restrict values = SPARSELY_ASSUME_ALIGNED(
         sparsely_alloc(SPARSELY_ALIGNMENT, nnz * sizeof(double))
     );
     if (!colptr || !rowind || !values) return NULL;
 
-    int *work_rows = malloc(n * sizeof(int));
-    double *work_values =  SPARSELY_ASSUME_ALIGNED(
+    int *restrict work_rows = malloc(n * sizeof(int));
+    double *restrict work_values =  SPARSELY_ASSUME_ALIGNED(
         sparsely_alloc(SPARSELY_ALIGNMENT, n * sizeof(double))
     );
-    int *imap = malloc(n * sizeof(int));  // -1 means unused
+    int *restrict imap = malloc(n * sizeof(int));  // -1 means unused
     if (!work_rows || !work_values || !imap) return NULL;
 
     int nz = 0;
