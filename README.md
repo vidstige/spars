@@ -20,6 +20,7 @@ To build & test the python bindings
 * Use a virtual environment: `python3.11 -m venv venv`
 * Activate: `source venv/bin/activate`
 * Install bindings: `pip install -e bindings/python`
+* If the above does not work, try this: `cd bindings/python/ && python setup.py build_ext --inplace`
 * Run tests: `pytest bindings/python`
 * Run benchmarks: `docker build --file benchmark.dockerfile . --tag spars-benchmarks && time docker run --rm -it spars-benchmarks`
 
