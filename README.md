@@ -24,6 +24,12 @@ To build & test the python bindings
 * Run tests: `pytest bindings/python`
 * Run benchmarks: `docker build --file benchmark.dockerfile . --tag spars-benchmarks && time docker run --rm -it spars-benchmarks`
 
+### Profiling
+On linux
+1. Enable perf events: `sudo sysctl kernel.perf_event_paranoid=1`
+2. Run with perf: `perf record --call-graph dwarf python bindings/python/benchmarks/cholesky.py`
+3. Show report: `perf report`
+
 ## Alternatives
 * [pysparse](https://github.com/PythonOptimizers/pysparse) - Created in the early 2000s and the last update was back in 2015. Not possible to install on modern python anymore
 * [scipy.sparse](https://docs.scipy.org/doc/scipy/reference/sparse.html) - Rather large library with everything from Fourier transforms, image processing to sparse matrices.
