@@ -1,3 +1,31 @@
 [build-system]
-requires = ["setuptools", "wheel", "numpy"]
+requires = ["setuptools>=61.0", "wheel", "numpy"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "sparsely"
+version = "0.1.0"
+description = "Lightweight sparse matrix library"
+readme = "README.md"
+requires-python = ">=3.7"
+
+authors = [
+  { name = "Samuel Carlsson", email = "samuel.carlsson@gmail.com" }
+]
+
+dependencies = [
+  "numpy",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "mypy",
+  "types-setuptools",
+]
+
+[tool.setuptools]
+packages = { find = {} }
+
+[tool.setuptools.package-data]
+"sparsely" = ["py.typed"]
