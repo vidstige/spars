@@ -1,4 +1,5 @@
 /build/
+/dist/
 /src/*.o
 __pycache__/
 *.cpython*.so

@@ -1,3 +1,9 @@
 /venv/
 /obj/
 /lib/*.a
+
+# generated when building the source distribution for some reason
+/bindings/src/
+
+# mac debris
+.DS_Store
