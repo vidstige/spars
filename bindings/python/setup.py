@@ -1,8 +1,17 @@
 # Warning: this file is still needed for the C extension to compile correctly.
 import platform
+import subprocess
 from setuptools import setup, Extension, find_packages
 
 import numpy
+
+
+# figure out package version 
+def get_version():
+    short_sha = subprocess.check_output(
+        ["git", "rev-parse", "--short", "HEAD"],
+    ).decode().strip()
+    return f"0.0.1+dev.{short_sha}"
 
 
 # Figure out suitable compiler flags for the current platform.
@@ -32,7 +41,7 @@ extra_link_args = [
 
 
 setup(
-    name="sparsely",
+    version=get_version(),
     packages=find_packages(),
     package_data={"sparsely": ["py.typed"]},
     install_requires=["numpy"],

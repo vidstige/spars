@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sparsely"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Lightweight sparse matrix library"
 readme = "README.md"
 requires-python = ">=3.7"
