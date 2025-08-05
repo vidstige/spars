@@ -14,7 +14,7 @@ void *spars_alloc(size_t alignment, size_t size) {
     return ptr;
 }
 
-void *spars_realloc(const void *old_ptr, size_t old_size, size_t new_size, size_t alignment) {
+void *spars_realloc(void *old_ptr, size_t old_size, size_t new_size, size_t alignment) {
     void *new_ptr = spars_alloc(alignment, new_size);
     if (!new_ptr)
         return NULL;
