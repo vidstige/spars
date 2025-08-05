@@ -1,9 +1,9 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include "sparsely/alloc.h"
-#include "sparsely/sort.h"
-#include "sparsely/csr.h"
+#include "spars/alloc.h"
+#include "spars/sort.h"
+#include "spars/csr.h"
 
 csr_t *csr_create(
     int nrows, int ncols, int nnz,
@@ -22,7 +22,7 @@ csr_t *csr_create(
     // Allocate and copy rowptr and colind using plain malloc (alignment doesn't help here)
     csr->rowptr = malloc(sizeof(int) * (nrows + 1));
     csr->colind = malloc(sizeof(int) * nnz);
-    csr->values = sparsely_alloc(32, sizeof(double) * nnz); // aligned allocation
+    csr->values = spars_alloc(32, sizeof(double) * nnz); // aligned allocation
 
     if (!csr->rowptr || !csr->colind || !csr->values) {
         csr_destroy(csr);
@@ -39,14 +39,14 @@ csr_t *csr_create(
 void csr_destroy(csr_t *csr) {
     if (!csr) return;
 
-    sparsely_free(csr->values);
+    spars_free(csr->values);
     free(csr->colind);
     free(csr->rowptr);
     free(csr);
 }
 
 // Compare A->colind[start + a] vs A->colind[start + b]
-static SPARSELY_COMPARE_FUNCTION(compare_col_indices, a, b, thunk) {
+static SPARS_COMPARE_FUNCTION(compare_col_indices, a, b, thunk) {
     int *base_colind = (int *)thunk;
     int ia = *(const int *)a;
     int ib = *(const int *)b;

@@ -1,7 +1,7 @@
 #pragma once
-#include "sparsely/csr.h"
-#include "sparsely/csc.h"
-#include "sparsely/dense.h"
+#include "spars/csr.h"
+#include "spars/csc.h"
+#include "spars/dense.h"
 
 dense_t csr_mul_dense(const csr_t *A, const dense_t *x);
 dense_t csr_transposed_mul_dense(const csr_t *A, const dense_t *x);

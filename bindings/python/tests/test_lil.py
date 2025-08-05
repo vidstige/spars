@@ -1,4 +1,4 @@
-from sparsely import lil_array
+from spars import lil_array
 
 def test_lil():
     # Create a LIL array with some data

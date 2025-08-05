@@ -1,13 +1,13 @@
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
-#include "sparsely_csr.h"
-#include "sparsely_csc.h"
-#include "sparsely_add.h"
-#include "sparsely_mul.h"
-#include "sparsely_cholesky.h"
+#include "spars_csr.h"
+#include "spars_csc.h"
+#include "spars_add.h"
+#include "spars_mul.h"
+#include "spars_cholesky.h"
 
-static PyModuleDef sparsely_module = {
+static PyModuleDef spars_module = {
     PyModuleDef_HEAD_INIT,
     .m_name = "_sparse_c",
     .m_doc = "Light weight sparse matrix library",
@@ -21,7 +21,7 @@ PyInit__sparse_c(void)
 
     import_array();
 
-    m = PyModule_Create(&sparsely_module);
+    m = PyModule_Create(&spars_module);
     if (!m)
         return NULL;
 

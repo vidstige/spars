@@ -1,6 +1,6 @@
 ![logo64x64.png](logo64x64.png)
 
-# Sparsely
+# Spars - Sparse math without fortran
 Lightweight sparse matrix c-library with python wrapper.
 
 Focused on correctness, but should be fairly fast for many problems.
@@ -21,7 +21,7 @@ To build & test the python bindings
 * Activate: `source venv/bin/activate`
 * Install bindings: `pip install -e bindings/python`
 * Run tests: `pytest bindings/python`
-* Run benchmarks: `docker build --file benchmark.dockerfile . --tag sparsely-benchmarks && time docker run --rm -it sparsely-benchmarks`
+* Run benchmarks: `docker build --file benchmark.dockerfile . --tag spars-benchmarks && time docker run --rm -it spars-benchmarks`
 
 ## Alternatives
 * [pysparse](https://github.com/PythonOptimizers/pysparse) - Created in the early 2000s and the last update was back in 2015. Not possible to install on modern python anymore

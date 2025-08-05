@@ -40,7 +40,7 @@ SRCS = $(wildcard $(SRC_DIR)/*.c)
 OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 
 # Static library name
-LIB = $(LIB_DIR)/libsparsely.a
+LIB = $(LIB_DIR)/libspars.a
 
 # Default target
 all: $(LIB)

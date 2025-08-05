@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "sparsely/alloc.h"
-#include "sparsely/csc.h"
+#include "spars/alloc.h"
+#include "spars/csc.h"
 
 static inline csc_t *cholesky(
     int nrows, int ncols, int nnz,
@@ -11,7 +11,7 @@ static inline csc_t *cholesky(
     const int *restrict a_rowind,
     const double *restrict a_pointer_values)
 {
-    const double *a_values = SPARSELY_ASSUME_ALIGNED(a_pointer_values);
+    const double *a_values = SPARS_ASSUME_ALIGNED(a_pointer_values);
 
     int n = ncols;
     if (nrows != n) {
@@ -21,14 +21,14 @@ static inline csc_t *cholesky(
 
     int *restrict colptr = calloc(n + 1, sizeof(int));
     int *restrict rowind = malloc(nnz * sizeof(int));  // overallocate
-    double *restrict values = SPARSELY_ASSUME_ALIGNED(
-        sparsely_alloc(SPARSELY_ALIGNMENT, nnz * sizeof(double))
+    double *restrict values = SPARS_ASSUME_ALIGNED(
+        spars_alloc(SPARS_ALIGNMENT, nnz * sizeof(double))
     );
     if (!colptr || !rowind || !values) return NULL;
 
     int *restrict work_rows = malloc(n * sizeof(int));
-    double *restrict work_values =  SPARSELY_ASSUME_ALIGNED(
-        sparsely_alloc(SPARSELY_ALIGNMENT, n * sizeof(double))
+    double *restrict work_values =  SPARS_ASSUME_ALIGNED(
+        spars_alloc(SPARS_ALIGNMENT, n * sizeof(double))
     );
     int *restrict imap = malloc(n * sizeof(int));  // -1 means unused
     if (!work_rows || !work_values || !imap) return NULL;
@@ -96,7 +96,7 @@ static inline csc_t *cholesky(
             fprintf(stderr, "Matrix not positive definite at column %d\n", j);
             free(colptr); free(rowind); free(values);
             free(work_rows); free(imap);
-            sparsely_free(work_values);
+            spars_free(work_values);
             return NULL;
         }
 
@@ -114,7 +114,7 @@ static inline csc_t *cholesky(
     }
 
     free(work_rows);
-    sparsely_free(work_values);
+    spars_free(work_values);
     free(imap);
 
     csc_t *L = malloc(sizeof(csc_t));
@@ -123,10 +123,10 @@ static inline csc_t *cholesky(
     L->nnz = nz;
     L->colptr = colptr;
     L->rowind = realloc(rowind, nz * sizeof(int));
-    L->values = sparsely_realloc(
+    L->values = spars_realloc(
         values, nnz * sizeof(double),
         nz * sizeof(double),
-        SPARSELY_ALIGNMENT
+        SPARS_ALIGNMENT
     );
     return L;
 }

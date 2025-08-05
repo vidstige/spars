@@ -1,10 +1,10 @@
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
-#include "sparsely_csr.h"
+#include "spars_csr.h"
 
-#include "sparsely/add.h"
-#include "sparsely_add.h"
+#include "spars/add.h"
+#include "spars_add.h"
 
 // Extern type from CSR
 extern PyTypeObject PyCSRType;

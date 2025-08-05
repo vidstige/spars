@@ -1,12 +1,12 @@
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
-#include "sparsely_csr.h"
+#include "spars_csr.h"
 
-#include "sparsely/csr.h"
-#include "sparsely/dense.h"
-#include "sparsely/mul.h"
-#include "sparsely_csc.h"
+#include "spars/csr.h"
+#include "spars/dense.h"
+#include "spars/mul.h"
+#include "spars_csc.h"
 
 // Extern type from CSC
 extern PyTypeObject PyCSCType;

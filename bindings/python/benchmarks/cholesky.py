@@ -25,8 +25,8 @@ def load_equation_system(directory: Path, n: int) -> Tuple[np.ndarray, np.ndarra
         return data["A"], data["b"]
 
 
-def benchmark_sparsely(A_dense, b, repeats: int):
-    from sparsely import CSC, cholesky, solve_cholesky
+def benchmark_spars(A_dense, b, repeats: int):
+    from spars import CSC, cholesky, solve_cholesky
     A = CSC.from_dense(A_dense)
     factor_durations, solve_durations = [], []
     for _ in range(repeats):
@@ -64,11 +64,11 @@ if __name__ == "__main__":
 
     directory = Path("data")
 
-    print("size,load,scikit-factor,scikit-solve,sparsely-factor,sparsely-solve,factor_fraction,solve_fraction")
+    print("size,load,scikit-factor,scikit-solve,spars-factor,spars-solve,factor_fraction,solve_fraction")
     for n in sizes:
         start = time.perf_counter()
         A_dense, b = load_equation_system(directory, n)
         load_time = time.perf_counter() - start
         scikit_factor, scikit_solve = benchmark_scikit(A_dense, b, repeats)
-        sparsely_factor, sparsely_solve = benchmark_sparsely(A_dense, b, repeats)
-        print(f"{n},{load_time:.6f},{scikit_factor:.6f},{scikit_solve:.6f},{sparsely_factor:.6f},{sparsely_solve:.6f},{sparsely_factor/scikit_factor:.2f},{sparsely_solve/scikit_solve:.2f}")
+        spars_factor, spars_solve = benchmark_spars(A_dense, b, repeats)
+        print(f"{n},{load_time:.6f},{scikit_factor:.6f},{scikit_solve:.6f},{spars_factor:.6f},{spars_solve:.6f},{spars_factor/scikit_factor:.2f},{spars_solve/scikit_solve:.2f}")

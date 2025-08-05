@@ -1,6 +1,6 @@
 from typing import Tuple
 import numpy as np
-from sparsely import CSC, CSR, LIL
+from spars import CSC, CSR, LIL
 
 
 def easy2x2() -> LIL:

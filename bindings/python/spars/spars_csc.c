@@ -1,13 +1,13 @@
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
-#include "sparsely_csc.h"
-#include "sparsely_csr.h"
+#include "spars_csc.h"
+#include "spars_csr.h"
 
-#include "sparsely/alloc.h"
-#include "sparsely/csr.h"
-#include "sparsely/csc.h"
-#include "sparsely/mul.h"
+#include "spars/alloc.h"
+#include "spars/csr.h"
+#include "spars/csc.h"
+#include "spars/mul.h"
 
 // Extern type from CSR
 extern PyTypeObject PyCSRType;
@@ -116,7 +116,7 @@ PyCSC_fromdense(PyTypeObject *type, PyObject *args)
     // Allocate CSC arrays
     int *colptr = malloc((ncols + 1) * sizeof(int));
     int *rowind = malloc(nnz * sizeof(int));
-    double *values = sparsely_alloc(SPARSELY_ALIGNMENT, nnz * sizeof(double));
+    double *values = spars_alloc(SPARS_ALIGNMENT, nnz * sizeof(double));
     if (!colptr || !rowind || !values) goto fail;
 
     // Fill colptr
@@ -172,7 +172,7 @@ fail:
     free(offset);
     free(colptr);
     free(rowind);
-    sparsely_free(values);
+    spars_free(values);
     return NULL;
 }
 

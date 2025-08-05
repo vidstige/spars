@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "sparsely/add.h"
-#include "sparsely/alloc.h"
+#include "spars/add.h"
+#include "spars/alloc.h"
 
 // assumes that the indices in A and B are sorted
 csr_t *csr_add_csr(const csr_t *A, const csr_t *B) {
@@ -14,7 +14,7 @@ csr_t *csr_add_csr(const csr_t *A, const csr_t *B) {
 
     int *rowptr = malloc((nrows + 1) * sizeof(int));
     int *colind = malloc(capacity * sizeof(int));
-    double *values = sparsely_alloc(SPARSELY_ALIGNMENT, capacity * sizeof(double));
+    double *values = spars_alloc(SPARS_ALIGNMENT, capacity * sizeof(double));
 
     int nnz = 0;
     rowptr[0] = 0;
@@ -46,7 +46,7 @@ csr_t *csr_add_csr(const csr_t *A, const csr_t *B) {
     }
 
     colind = realloc(colind, nnz * sizeof(int));
-    values = sparsely_realloc(values, capacity * sizeof(double), nnz * sizeof(double), SPARSELY_ALIGNMENT);
+    values = spars_realloc(values, capacity * sizeof(double), nnz * sizeof(double), SPARS_ALIGNMENT);
 
     csr_t *C = malloc(sizeof(csr_t));
     C->nrows = A->nrows;

@@ -1,3 +1,3 @@
 #pragma once
-#include "sparsely/csc.h"
+#include "spars/csc.h"
 csc_t *cholesky_factor(const csc_t *A);

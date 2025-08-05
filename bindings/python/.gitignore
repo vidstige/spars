@@ -3,4 +3,4 @@
 /src/*.o
 __pycache__/
 *.cpython*.so
-/sparsely.egg-info/
+/spars.egg-info/

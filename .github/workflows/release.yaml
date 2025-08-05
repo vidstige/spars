@@ -1,4 +1,4 @@
-name: Release Sparsely
+name: Release spars
 
 on:
   push:

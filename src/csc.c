@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sparsely/alloc.h"
-#include "sparsely/csc.h"
-#include "sparsely/sort.h"
+#include "spars/alloc.h"
+#include "spars/csc.h"
+#include "spars/sort.h"
 
 csc_t *csc_create(int nrows, int ncols, int nnz,
                    int *colptr,
@@ -24,7 +24,7 @@ csc_t *csc_create(int nrows, int ncols, int nnz,
     // Allocate and copy rowptr and colind using plain malloc (alignment doesn't help here)
     csc->colptr = malloc(sizeof(int) * (ncols + 1));
     csc->rowind = malloc(sizeof(int) * nnz);
-    csc->values = sparsely_alloc(32, sizeof(double) * nnz); // aligned allocation
+    csc->values = spars_alloc(32, sizeof(double) * nnz); // aligned allocation
     
     if (!csc->colptr || !csc->rowind || !csc->values) {
         csc_destroy(csc);
@@ -43,11 +43,11 @@ void csc_destroy(csc_t *csc) {
 
     free(csc->colptr);
     free(csc->rowind);
-    sparsely_free(csc->values);
+    spars_free(csc->values);
     free(csc);
 }
 
-static SPARSELY_COMPARE_FUNCTION(compare_row_indices, a, b, thunk) {
+static SPARS_COMPARE_FUNCTION(compare_row_indices, a, b, thunk) {
     int ia = *(const int *)a;
     int ib = *(const int *)b;
     const int *rows = (const int *)thunk;

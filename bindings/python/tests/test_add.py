@@ -1,5 +1,5 @@
 import numpy as np
-from sparsely import CSR
+from spars import CSR
 
 from .matrices import easy3x3
 

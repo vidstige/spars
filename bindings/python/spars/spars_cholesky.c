@@ -2,12 +2,12 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
-#include "sparsely/cholesky.h"
-#include "sparsely/cholesky_solve.h"
-#include "sparsely/dense.h"
+#include "spars/cholesky.h"
+#include "spars/cholesky_solve.h"
+#include "spars/dense.h"
 
-#include "sparsely_csc.h"
-#include "sparsely_cholesky.h"
+#include "spars_csc.h"
+#include "spars_cholesky.h"
 
 // Extern type from CSC
 extern PyTypeObject PyCSCType;

@@ -1,9 +1,9 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include "sparsely/alloc.h"
-#include "sparsely/dense.h"
-#include "sparsely/mul.h"
+#include "spars/alloc.h"
+#include "spars/dense.h"
+#include "spars/mul.h"
 
 dense_t csr_mul_dense(const csr_t *A, const dense_t *x) {
     assert(A->ncols == x->n);
@@ -153,11 +153,11 @@ csr_t *csr_mul_csr(const csr_t *A, const csr_t *B) {
             if (nnz >= alloc_nnz) {
                 int new_alloc_nnz = alloc_nnz * 2;
                 int *new_colind = realloc(colind, new_alloc_nnz * sizeof(int));
-                double *new_values = sparsely_realloc(
+                double *new_values = spars_realloc(
                     values,
                     alloc_nnz * sizeof(double),
                     new_alloc_nnz * sizeof(double),
-                    SPARSELY_ALIGNMENT
+                    SPARS_ALIGNMENT
                 );
                 alloc_nnz = new_alloc_nnz;
                 if (!new_colind || !new_values) {
@@ -184,11 +184,11 @@ csr_t *csr_mul_csr(const csr_t *A, const csr_t *B) {
     free(next);
 
     colind = realloc(colind, nnz * sizeof(int));
-    values = sparsely_realloc(
+    values = spars_realloc(
         values,
         alloc_nnz * sizeof(double),
         nnz * sizeof(double),
-        SPARSELY_ALIGNMENT
+        SPARS_ALIGNMENT
     );
     csr_t *csr = malloc(sizeof(csr_t));
     csr->nrows = m;

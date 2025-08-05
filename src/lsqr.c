@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "sparsely/lsqr.h"
-#include "sparsely/dense.h"
-#include "sparsely/csr.h"
-#include "sparsely/mul.h"   
+#include "spars/lsqr.h"
+#include "spars/dense.h"
+#include "spars/csr.h"
+#include "spars/mul.h"   
 
 #define MAX_ITER 1000
 #define TOLERANCE 1e-8

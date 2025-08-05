@@ -1,7 +1,7 @@
 #pragma once
 
-#include "sparsely/csr.h"
-#include "sparsely/dense.h"
+#include "spars/csr.h"
+#include "spars/dense.h"
 
 // Solve Ax = b in least-squares sense using LSQR
 // If x0 is not NULL, it will be used as initial guess; otherwise zero vector is used

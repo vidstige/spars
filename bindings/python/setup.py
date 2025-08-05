@@ -47,18 +47,18 @@ extra_link_args = [
 setup(
     version=get_version(),
     packages=find_packages(),
-    package_data={"sparsely": ["py.typed"]},
+    package_data={"spars": ["py.typed"]},
     install_requires=["numpy"],
     ext_modules=[
         Extension(
-            "sparsely._sparse_c",
+            "spars._sparse_c",
             sources=[
-                "sparsely/sparsely_module.c",
-                "sparsely/sparsely_csr.c",
-                "sparsely/sparsely_csc.c",
-                "sparsely/sparsely_add.c",
-                "sparsely/sparsely_mul.c",
-                "sparsely/sparsely_cholesky.c",
+                "spars/spars_module.c",
+                "spars/spars_csr.c",
+                "spars/spars_csc.c",
+                "spars/spars_add.c",
+                "spars/spars_mul.c",
+                "spars/spars_cholesky.c",
                 "../../src/csr.c",
                 "../../src/csc.c",
                 "../../src/cholesky.c",

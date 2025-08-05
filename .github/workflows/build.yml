@@ -1,4 +1,4 @@
-name: Verify Sparsely
+name: Verify spars
 
 on:
   push:

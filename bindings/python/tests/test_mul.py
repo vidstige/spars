@@ -2,7 +2,7 @@ from typing import Callable, Tuple
 
 import numpy as np
 import pytest
-from sparsely import CSC, CSR
+from spars import CSC, CSR
 
 from .matrices import easy3x3, easy3x4, random_csc, random_csr
 

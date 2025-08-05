@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from sparsely import CSR
+from spars import CSR
 
 
 def test_csr_raw():

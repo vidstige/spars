@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sparsely import CSC
+from spars import CSC
 
 from .matrices import easy2x2
 

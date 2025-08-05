@@ -1,6 +1,6 @@
 import numpy as np
 
-from sparsely import cholesky, solve_cholesky
+from spars import cholesky, solve_cholesky
 
 from .matrices import easy2x2
 

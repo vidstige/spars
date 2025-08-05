@@ -1,6 +1,6 @@
 #pragma once
 #include <Python.h>
-#include "sparsely/csr.h"
+#include "spars/csr.h"
 
 typedef struct {
     PyObject_HEAD

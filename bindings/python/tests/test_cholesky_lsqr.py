@@ -1,5 +1,5 @@
 import numpy as np
-from sparsely import CSR, cholesky, solve_cholesky
+from spars import CSR, cholesky, solve_cholesky
 
 
 def test_cholesky_lsqr_against_numpy():

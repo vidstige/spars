@@ -2,8 +2,8 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h> // todo: don't exit here, return error code instead
-#include "sparsely/mul.h"
-#include "sparsely/cholesky_solve.h"
+#include "spars/mul.h"
+#include "spars/cholesky_solve.h"
 
 void csr_solve_lower(const csr_t *L, const dense_t *b, dense_t *x) {
     int n = L->nrows;
