@@ -1,4 +1,5 @@
 # Warning: this file is still needed for the C extension to compile correctly.
+import os
 import platform
 import subprocess
 from setuptools import setup, Extension, find_packages
@@ -8,6 +9,9 @@ import numpy
 
 # figure out package version 
 def get_version():
+    version = os.environ.get("GITHUB_REF_NAME")
+    if version and version.startswith("v"):
+        return version.lstrip("v")
     short_sha = subprocess.check_output(
         ["git", "rev-parse", "--short", "HEAD"],
     ).decode().strip()
