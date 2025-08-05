@@ -19,6 +19,7 @@ extra_compile_args = [
     "-O3",
     detect_machine_flag(),
     "-ffast-math",
+    "-fno-math-errno",
     "-flto",
     "-funroll-loops",
     "-ftree-vectorize",
