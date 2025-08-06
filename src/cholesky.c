@@ -61,17 +61,14 @@ static inline csc_t *cholesky(
         for (int k = 0; k < j; ++k) {
             // First find j in column k
             double Ljk = 0.0;
-            for (int idx = ptr[k]; idx < colptr[k + 1]; ++idx) {
-                int row = rowind[idx];
-                if (row == j) {
-                    Ljk = values[idx];
-                    ptr[k] = idx; // reuse this value next time
-                    break;
-                } else if (row > j) {
-                    ptr[k] = idx; // we've passed j, so start here next time
-                    break;
-                }
-            }
+            int idx = ptr[k];
+            const int end = colptr[k + 1];
+            while (idx < end && rowind[idx] < j)
+                ++idx;
+
+            ptr[k] = idx;
+            if (idx < end && rowind[idx] == j)
+                Ljk = values[idx];
 
             if (Ljk == 0.0) continue;
 
