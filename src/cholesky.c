@@ -27,7 +27,7 @@ static inline csc_t *cholesky(
     if (!colptr || !rowind || !values) return NULL;
 
     int *restrict work_rows = malloc(n * sizeof(int));
-    double *restrict work_values =  SPARS_ASSUME_ALIGNED(
+    double *restrict work_values = SPARS_ASSUME_ALIGNED(
         spars_alloc(SPARS_ALIGNMENT, n * sizeof(double))
     );
     int *restrict imap = malloc(n * sizeof(int));  // -1 means unused
@@ -93,7 +93,6 @@ static inline csc_t *cholesky(
 
         // validate diagonal entry 
         if (diag_idx == -1 || work_values[diag_idx] <= 0.0) {
-        //if (!found_diag || diag <= 0.0) {
             fprintf(stderr, "Matrix not positive definite at column %d\n", j);
             free(colptr); free(rowind); free(values);
             free(work_rows); free(imap);
