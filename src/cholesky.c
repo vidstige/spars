@@ -40,6 +40,7 @@ static inline csc_t *cholesky(
     for (int k = 0; k < n; ++k)
         ptr[k] = colptr[k];
 
+    int diag_idx = -1; // keep track of diagonal index
     int nz = 0;
     for (int j = 0; j < n; ++j) {
         int count = 0;
@@ -51,6 +52,7 @@ static inline csc_t *cholesky(
                 imap[i] = count;
                 work_rows[count] = i;
                 work_values[count] = a_values[idx];
+                if (i == j) diag_idx = count; // save diagonal index
                 count++;
             }
         }
@@ -83,6 +85,7 @@ static inline csc_t *cholesky(
                         imap[i] = count;
                         work_rows[count] = i;
                         work_values[count] = 0.0;
+                        if (i == j) diag_idx = count; // update diagonal index in case diagonal entry was inserted
                         entry_idx = count;
                         count++;
                     }
@@ -91,25 +94,17 @@ static inline csc_t *cholesky(
             }
         }
 
-        // Find and validate diagonal
-        double diag = 0.0;
-        int found_diag = 0;
-        for (int k = 0; k < count; ++k) {
-            if (work_rows[k] == j) {
-                diag = work_values[k];
-                found_diag = 1;
-                break;
-            }
-        }
-
-        if (!found_diag || diag <= 0.0) {
+        // validate diagonal entry 
+        if (diag_idx == -1 || work_values[diag_idx] <= 0.0) {
+        //if (!found_diag || diag <= 0.0) {
             fprintf(stderr, "Matrix not positive definite at column %d\n", j);
             free(colptr); free(rowind); free(values);
             free(work_rows); free(imap);
             spars_free(work_values);
             return NULL;
         }
-
+        
+        double diag = work_values[diag_idx];
         double Ljj = sqrt(diag);
         colptr[j] = nz;
 
