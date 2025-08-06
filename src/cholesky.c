@@ -32,11 +32,11 @@ static inline csc_t *cholesky(
     );
     int *restrict imap = malloc(n * sizeof(int));  // -1 means unused
     if (!work_rows || !work_values || !imap) return NULL;
+    for (int i = 0; i < n; ++i) imap[i] = -1;
 
     int nz = 0;
     for (int j = 0; j < n; ++j) {
         int count = 0;
-        for (int i = 0; i < n; ++i) imap[i] = -1;
 
         // Fill work arrays with column j of A, where i >= j
         for (int idx = a_colptr[j]; idx < a_colptr[j + 1]; ++idx) {
@@ -111,6 +111,10 @@ static inline csc_t *cholesky(
         }
 
         colptr[j + 1] = nz;
+
+        // clear i lookup
+        for (int k = 0; k < count; ++k)
+            imap[work_rows[k]] = -1;
     }
 
     free(work_rows);
