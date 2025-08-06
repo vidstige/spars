@@ -34,6 +34,12 @@ static inline csc_t *cholesky(
     if (!work_rows || !work_values || !imap) return NULL;
     for (int i = 0; i < n; ++i) imap[i] = -1;
 
+    // Keep track of how far we've worked in each column
+    int *restrict ptr = malloc(n * sizeof(int));
+    if (!ptr) return NULL;
+    for (int k = 0; k < n; ++k)
+        ptr[k] = colptr[k];
+
     int nz = 0;
     for (int j = 0; j < n; ++j) {
         int count = 0;
@@ -51,12 +57,16 @@ static inline csc_t *cholesky(
 
         // Subtract previous column contributions
         for (int k = 0; k < j; ++k) {
+            // First find j in column k
             double Ljk = 0.0;
-            for (int idx = colptr[k]; idx < colptr[k + 1]; ++idx) {
-                if (rowind[idx] == j) {
+            for (int idx = ptr[k]; idx < colptr[k + 1]; ++idx) {
+                int row = rowind[idx];
+                if (row == j) {
                     Ljk = values[idx];
+                    ptr[k] = idx; // reuse this value next time
                     break;
-                } else if (rowind[idx] > j) {
+                } else if (row > j) {
+                    ptr[k] = idx; // we've passed j, so start here next time
                     break;
                 }
             }
@@ -120,6 +130,7 @@ static inline csc_t *cholesky(
     free(work_rows);
     spars_free(work_values);
     free(imap);
+    free(ptr);
 
     csc_t *L = malloc(sizeof(csc_t));
     L->nrows = n;
